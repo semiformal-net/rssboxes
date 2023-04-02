@@ -14,7 +14,7 @@ const RSS_FEEDS = [
   'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
   'http://feeds.bbci.co.uk/news/video_and_audio/world/rss.xml',
   'http://rss.cbc.ca/lineup/canada.xml',
-  'https://ir.thomsonreuters.com/rss/news-releases.xml?items=15',
+  'https://cdn.feedcontrol.net/8/1114-wioSIX3uu8MEj.xml',
   'http://news.ycombinator.com/rss',
   'http://feed.torrentfreak.com/Torrentfreak/',
   'https://motherboard.vice.com/en_us/rss',
