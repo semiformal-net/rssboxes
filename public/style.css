@@ -26,23 +26,27 @@ header {
   margin: 0;
   padding: 0;
 }
+
+p {
+  text-align: center;
+}
+
 h1 {
   margin: 0;
   font-size: 22px;
 }
 
-.footer {
-  position: fixed;
-  left: 0;
-  bottom: 0;
-  width: 100%;
-  background-color: DarkRed;
-  color: white;
-  text-align: center;
+footer {
+  padding: 20px 0;
 }
 
-.footer > a {
+footer a {
   color: white;
+}
+
+footer img {
+  max-height: 30px;
+  margin-left: 10px;
 }
 
 .title {
