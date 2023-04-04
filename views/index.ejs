@@ -7,9 +7,6 @@
     <link rel="stylesheet" href="/style.css" />
   </head>
   <body>
-    <header>
-      <h1>rss news</h1>
-    </header>
     <main>
       <div class="cards">
 
@@ -23,7 +20,7 @@
           </div>
           <ul>
             <% news[i].items.forEach((item) => { %>
-            <li><a href="<%= item.link %>"><%= item.title %></a></li>
+            <li><a href="<%= item.link %>" target="_blank"><%= item.title %></a></li>
             <% }); %>
           </ul>
         </div>
@@ -32,8 +29,8 @@
 
     </div>
     </main>
-    <footer>
-      <p>from <a href="https://github.com/semiformal-net/rssboxes">semiformal</a></p>
-    </footer>
+    <div class="footer">
+      <p>from <a href="https://github.com/semiformal-net/rssboxes" target="_blank">semiformal</a></p>
+    </div>
   </body>
 </html>

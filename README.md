@@ -4,6 +4,8 @@ A simple nodejs app (my first!) to pull various rss feeds and display them in bo
 
 Edit the feeds in `index.js`
 
+Demo site: [rssboxes.semiformal.net](https://rssboxes.semiformal.net/)
+
 ## hosting
 
 This is set up to run on GCP per [these instructions](https://cloud.google.com/appengine/docs/standard/nodejs/building-app).

@@ -4,32 +4,58 @@ body {
   color: #333;
   margin: 0;
   padding: 0;
+  background-image: url("/290665.png");
+  background-repeat: repeat;
 }
 
 header {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 64px;
-  background-color: Lavender;
+  width: 100%;
+  padding:60px 0;
+  text-align: center;
+  background: transparent;
   color: black;
 }
 
+.bannertext {
+  font-size: 44px;
+  width: 100%;
+  padding:60px 0;
+  text-align: center;
+  background: transparent;
+  color: DarkRed;
+  margin: 0;
+  padding: 0;
+}
 h1 {
   margin: 0;
   font-size: 22px;
+}
+
+.footer {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  width: 100%;
+  background-color: DarkRed;
+  color: white;
+  text-align: center;
+}
+
+.footer > a {
+  color: white;
 }
 
 .title {
   margin: 0;
   padding: 0;
   border-radius: 15px 15px 0 0;
-  background-color: lightblue;
+  background-color: DarkRed;
+  color: white;
 }
 
 h2 {
   margin: 0 0 0 16px;
-  font-size: 22px;
+  font-size: 20px;
 }
 
 ul {
