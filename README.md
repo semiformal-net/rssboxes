@@ -1,14 +1,14 @@
 # rssboxes
 
-A simple nodejs app (my first!) to pull various rss feeds and display them in boxes
+A simple app to pull various rss feeds and display them in boxes
 
-Edit the feeds in `index.js`
+Edit the feeds in `main.py`
 
 Demo site: [rssboxes.semiformal.net](https://rssboxes.semiformal.net/)
 
 ## hosting
 
-This is set up to run on GCP per [these instructions](https://cloud.google.com/appengine/docs/standard/nodejs/building-app).
+This is set up to run on GCP per [these instructions](https://cloud.google.com/appengine/docs/standard/python3/runtime).
 
 run `gcloud app deploy`
 

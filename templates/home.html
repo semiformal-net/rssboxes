@@ -10,37 +10,39 @@
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.6.3/jquery.min.js"></script>
     <!-- Latest compiled JavaScript -->
     <script src="https://maxcdn.bootstrapcdn.com/bootstrap/3.4.1/js/bootstrap.min.js"></script>
-    <link rel="stylesheet" href="/style.css" />
+    <link rel="shortcut icon" href="{{ url_for('serve_favicon') }}">
+    <link rel="stylesheet" type="text/css" href="/static/style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
   </head>
   <body>
-    <main>
+
       <div class="cards">
 
 
-        <% for (let i = 0; i < news.length; i++) { %>
+        {% for feed in feeds %}
 
 
         <div class="card">
           <div class="title">
-            <h2><%= news[i].title %></h2>
+            <h2>{{ feed.title }}</h2>
           </div>
           <ul>
-            <% news[i].items.forEach((item) => { %>
-            <li><a href="<%= item.link %>" target="_blank"><%= item.title %></a></li>
-            <% }); %>
+            {% for article in feed.articles %}
+              <li><a href="{{ article.link }}" target="_blank">{{ article.title }}</a></li>
+            {% endfor %}
           </ul>
         </div>
 
-        <% } %>
+        {% endfor %}
 
     </div>
-    </main>
+
     <footer style="background-color: darkred; color: white; font-family: Roboto;">
     <p>
          from <a href="https://github.com/semiformal-net/rssboxes" target="_blank">Semiformal</a>
     </p>
   </footer>
+
   </body>
 </html>
