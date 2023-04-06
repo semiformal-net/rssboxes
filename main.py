@@ -45,7 +45,7 @@ def get_news():
     'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
     'http://feeds.bbci.co.uk/news/video_and_audio/world/rss.xml',
     'http://rss.cbc.ca/lineup/canada.xml',
-    'https://cdn.feedcontrol.net/8/1114-wioSIX3uu8MEj.xml',
+    'https://rss-bridge.org/bridge01/?action=display&bridge=ReutersBridge&feed=home%2Ftopnews&format=Atom',
     'https://news.ycombinator.com/rss',
     'http://feed.torrentfreak.com/Torrentfreak/',
     'https://motherboard.vice.com/en_us/rss',
