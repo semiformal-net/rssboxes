@@ -55,7 +55,8 @@ def get_news():
     'http://krebsonsecurity.com/feed/',
     'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
     'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
-    'https://noted.lol/rss/'
+    'https://noted.lol/rss/',
+    'https://forums.redflagdeals.com/feed/forum/9'
     ]
 
     feed_list = asyncio.run(get_all_feed_articles(RSS_FEEDS))
