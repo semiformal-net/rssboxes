@@ -4,8 +4,37 @@ import aiohttp
 import feedparser
 import os
 import html
+from io import StringIO
+from html.parser import HTMLParser
+import re
+
+class MLStripper(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.reset()
+        self.strict = False
+        self.convert_charrefs= True
+        self.text = StringIO()
+    def handle_data(self, d):
+        self.text.write(d)
+    def get_data(self):
+        return self.text.getvalue()
 
 app = Flask(__name__)
+
+async def strip_tags(html):
+    s = MLStripper()
+    s.feed(html)
+    return s.get_data()
+
+async def clean_summary(summary):
+    cln=html.unescape(summary)
+    cln=await strip_tags(cln)
+    cln=cln.strip()
+    # look for the first sentence or the first line and grab that,
+    #  then trim the result to 200char
+    rcln=re.split(r'[\.\n]',cln)
+    return(rcln[0][0:200])
 
 async def fetch_feed(feed_url):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
@@ -21,6 +50,9 @@ async def get_articles_and_title(feed_url):
     except asyncio.TimeoutError:
         return [{'title': 'Timed out!', 'link': feed_url}], feed_url
     feed_parsed = feedparser.parse(feed_data)
+    if 'summary' in feed_parsed['entries'][0].keys():
+        clean = await asyncio.wait_for(  clean_summary(feed_parsed['entries'][0]['summary']) ,timeout=1 )
+        print(clean)
     return [{'title': html.unescape(entry.title), 'link': entry.link} for entry in feed_parsed.entries[:5]], html.unescape(feed_parsed['feed']['title'])
 
 async def get_feed_articles(feed):
