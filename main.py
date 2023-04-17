@@ -33,8 +33,8 @@ async def clean_summary(summary):
     cln=cln.strip()
     # look for the first sentence or the first line and grab that,
     #  then trim the result to 200char
-    rcln=re.split(r'[\.\n]',cln)
-    return(rcln[0][0:200])
+    rcln=re.split(r'[\.\n]',cln)[0][0:200]
+    return(rcln)
 
 async def fetch_feed(feed_url):
     headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
@@ -51,9 +51,12 @@ async def get_articles_and_title(feed_url):
         return [{'title': 'Timed out!', 'link': feed_url}], feed_url
     feed_parsed = feedparser.parse(feed_data)
     if 'summary' in feed_parsed['entries'][0].keys():
-        clean = await asyncio.wait_for(  clean_summary(feed_parsed['entries'][0]['summary']) ,timeout=1 )
-        print(clean)
-    return [{'title': html.unescape(entry.title), 'link': entry.link} for entry in feed_parsed.entries[:5]], html.unescape(feed_parsed['feed']['title'])
+        print(feed_parsed.entries[0].summary)
+        articles_dict=[{'title': html.unescape(entry.title), 'link': entry.link, 'summary': await clean_summary(entry.summary) } for entry in feed_parsed.entries[:5]]
+    else:
+        articles_dict=[{'title': html.unescape(entry.title), 'link': entry.link, 'summary': None } for entry in feed_parsed.entries[:5]]
+
+    return articles_dict , html.unescape(feed_parsed['feed']['title'])
 
 async def get_feed_articles(feed):
     try:
@@ -63,7 +66,7 @@ async def get_feed_articles(feed):
             'articles': articles
         }
     except Exception as e:
-        return {'title': f"Error fetching feed: {str(e)}", 'articles': []}
+        return {'title': f"Error fetching feed: {str(e)}", 'articles': [], 'summaries': []}
 
 async def get_all_feed_articles(RSS_FEEDS):
     tasks = [asyncio.create_task(get_feed_articles(feed)) for feed in RSS_FEEDS]
@@ -104,4 +107,4 @@ def serve_favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 if __name__ == '__main__':
-    app.run(port=8080)
+    app.run(port=8080,debug=True)

@@ -86,7 +86,6 @@ a {
   grid-auto-rows: minmax(min-content, max-content);
 }
 
-
 .topbanner {
   margin: auto;
   width: 75%;
@@ -131,21 +130,16 @@ a {
   background-color: #57544A;
 }
 
-
 ul {
   list-style: none;
   margin: 0;
   padding: 6px 16px 6px 16px;
 }
 
-li {
-  font-family: "Roboto", sans-serif;
-  margin: 6px 0 6px 0;
-  border-bottom: 1px dotted grey;
-  transition: color 0.2s ease-in-out;
-}
-li:hover {
-  color: #f39c12;
+.subtext  {
+  font-size: 10px;
+  margin: 0 0 2px 0;
+  font-style: italic;
 }
 
 /*****************************/
@@ -172,4 +166,3 @@ li:hover {
 @media (min-width: 900px) {
   .cards { grid-template-columns: repeat(3, 1fr); }
 }
-

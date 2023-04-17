@@ -28,7 +28,12 @@
           </div>
           <ul>
             {% for article in feed.articles %}
-              <li><a href="{{ article.link }}" target="_blank">{{ article.title }}</a></li>
+              <li>
+                <a href="{{ article.link }}" target="_blank">{{ article.title }}</a>
+                {% if article.summary is not none %}
+                <div class=subtext>{{article.summary}}</div>
+                {% endif %}
+              </li>
             {% endfor %}
           </ul>
         </div>
