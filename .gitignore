@@ -137,3 +137,6 @@ env/
 
 #kate
 *.kate-swp
+
+# pycruft
+__pycache__/

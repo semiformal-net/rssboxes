@@ -2,9 +2,11 @@
 
 A simple app to pull various rss feeds and display them in boxes
 
-Edit the feeds in `main.py`
-
 Demo site: [rssboxes.semiformal.net](https://rssboxes.semiformal.net/)
+
+## configuration
+
+Edit the feeds in `rss_config.py`. It is just a python file.
 
 ## hosting
 
