@@ -33,7 +33,7 @@ async def clean_summary(summary):
     cln=cln.strip()
     # look for the first sentence or the first line and grab that,
     #  then trim the result to 200char
-    rcln=re.split(r'[\.\n]',cln)[0][0:200]
+    rcln=re.split(r'\n|(?<!\.[A-Z])[\.\!\?]\s',cln)[0][0:200]
     return(rcln)
 
 async def fetch_feed(feed_url):
@@ -51,7 +51,6 @@ async def get_articles_and_title(feed_url):
         return [{'title': 'Timed out!', 'link': feed_url}], feed_url
     feed_parsed = feedparser.parse(feed_data)
     if 'summary' in feed_parsed['entries'][0].keys():
-        print(feed_parsed.entries[0].summary)
         articles_dict=[{'title': html.unescape(entry.title), 'link': entry.link, 'summary': await clean_summary(entry.summary) } for entry in feed_parsed.entries[:5]]
     else:
         articles_dict=[{'title': html.unescape(entry.title), 'link': entry.link, 'summary': None } for entry in feed_parsed.entries[:5]]
@@ -107,4 +106,4 @@ def serve_favicon():
     return send_from_directory(os.path.join(app.root_path, 'static'),
                                'favicon.ico', mimetype='image/vnd.microsoft.icon')
 if __name__ == '__main__':
-    app.run(port=8080,debug=True)
+    app.run(port=8080)
