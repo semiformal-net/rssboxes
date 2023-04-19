@@ -24,3 +24,7 @@ You can run this as a docker container if you'd like. Using the included `Docker
 docker build -t rssboxes .
 docker run -it -p 8080:8080 rssboxes
 ```
+
+## Why?
+
+I did this for fun, and maybe because I wanted a lightweight, ad-free, self-hosted [alternative to iGoogle](https://www.theguardian.com/technology/askjack/2013/nov/07/igoogle-alternatives).

@@ -4,6 +4,7 @@ COPY requirements.txt /
 RUN pip3 install -r /requirements.txt
 RUN pip3 install gunicorn
 COPY main.py /app/
+COPY rss_config.py /app/
 COPY templates /app/templates
 COPY static /app/static
 WORKDIR /app
