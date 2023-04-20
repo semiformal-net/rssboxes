@@ -63,6 +63,10 @@ a {
   font-size: 12px;
 }
 
+a:hover {
+  color: #6d695c;
+}
+
 /*****************************/
 
 .card {
@@ -149,10 +153,6 @@ li {
   margin: 4px 0;
   border-bottom: 1px solid #ccc;
   transition: color 0.2s ease-in-out;
-}
-
-li:hover {
-  color: #f39c12;
 }
 
 /***************************************/
