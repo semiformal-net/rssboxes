@@ -14,5 +14,6 @@ RSS_FEEDS = [
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
 'https://noted.lol/rss/',
-'https://forums.redflagdeals.com/feed/forum/9'
+'https://forums.redflagdeals.com/feed/forum/9',
+'https://www.trendhunter.com/rss'
 ]
