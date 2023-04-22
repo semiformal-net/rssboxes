@@ -75,6 +75,7 @@ a:hover {
   height: auto;
   background-color: #f5f5f5;
   border-radius: 8px;
+  border: 1px White;
   box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
   transition: transform 0.2s ease-in-out;
 }
@@ -84,7 +85,11 @@ a:hover {
 
 .cards {
   height: auto;
-  margin: 16px 16px 16px 16px;
+  max-width: 1600px;
+  margin-top: 16px;
+  margin-left: auto;
+  margin-right: auto;
+  margin-bottom: 16px;
   display: grid;
   gap: 12px;
   grid-auto-rows: minmax(min-content, max-content);
@@ -92,7 +97,9 @@ a:hover {
 
 .topbanner {
   margin: auto;
-  width: 75%;
+  max-width: 1600px;
+  margin-left: auto;
+  margin-right: auto;
   padding: 20px 0;
   text-align: center;
   background: #6d695c;
@@ -104,7 +111,6 @@ a:hover {
 
 .bottombanner {
   margin: auto;
-  width: 100%;
   padding: 20px 0;
   text-align: center;
   background: DarkRed;
@@ -156,6 +162,35 @@ li {
 }
 
 /***************************************/
+
+header{
+    font-family: 'Playfair Display', serif;
+    font-weight: 900;
+    font-size: 80px;
+    text-transform: uppercase;
+    display: inline-block;
+    line-height: 72px;
+    margin-bottom: 0;
+    color: White;
+
+}
+.head{
+    text-align: center;
+    position: relative;
+}
+
+.headerobjectswrapper{
+}
+
+.subhead{
+    text-transform: uppercase;
+    border-bottom: 2px solid #2f2f2f;
+    border-top: 2px solid #2f2f2f;
+    padding: 12px 0 12px 0;
+    color: White;
+
+}
+
 
 /* Screen larger than 600px? 2 column */
 @media (min-width: 600px) {
