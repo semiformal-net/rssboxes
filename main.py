@@ -36,17 +36,22 @@ async def clean_summary(summary):
     rcln=re.split(r'\n|(?<!\.[A-Z])[\.\!\?]\s',cln)[0][0:200]
     return(rcln)
 
-async def fetch_feed(feed_url):
-    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
-    async with aiohttp.ClientSession(headers=headers) as session:
-        async with session.get(feed_url) as response:
-            if response.status != 200:
-                raise Exception(f"Error fetching feed from {feed_url}. Server responded with status {response.status}.")
-            return await response.text()
+async def get_connection_pool(num_connections=10):
+    connector=aiohttp.TCPConnector(ssl=False, limit=num_connections)
+    session = aiohttp.ClientSession(connector=connector)
+    return session
 
-async def get_articles_and_title(feed_url):
+async def fetch_feed(feed_url, session):
+    headers = {"User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64; rv:58.0) Gecko/20100101 Firefox/58.0"}
+    #async with aiohttp.ClientSession(headers=headers) as session:
+    async with session.get(feed_url) as response:
+        if response.status != 200:
+            raise Exception(f"Error fetching feed from {feed_url}. Server responded with status {response.status}.")
+        return await response.text()
+
+async def get_articles_and_title(feed_url,session):
     try:
-        feed_data = await asyncio.wait_for(fetch_feed(feed_url), timeout=5)
+        feed_data = await asyncio.wait_for(fetch_feed(feed_url,session), timeout=5)
     except asyncio.TimeoutError:
         return [{'title': 'Timed out!', 'link': feed_url}], feed_url
     feed_parsed = feedparser.parse(feed_data)
@@ -57,9 +62,9 @@ async def get_articles_and_title(feed_url):
 
     return articles_dict , html.unescape(feed_parsed['feed']['title'])
 
-async def get_feed_articles(feed):
+async def get_feed_articles(feed,session):
     try:
-        articles, title = await get_articles_and_title(feed)
+        articles, title = await get_articles_and_title(feed,session)
         return {
             'title': title,
             'articles': articles
@@ -67,9 +72,12 @@ async def get_feed_articles(feed):
     except Exception as e:
         return {'title': f"Error fetching feed: {str(e)}", 'articles': [], 'summaries': []}
 
-async def get_all_feed_articles(RSS_FEEDS):
-    tasks = [asyncio.create_task(get_feed_articles(feed)) for feed in RSS_FEEDS]
-    return await asyncio.gather(*tasks)
+async def get_all_feed_articles(RSS_FEEDS, num_connections=10):
+    session = await get_connection_pool(num_connections)
+    tasks = [asyncio.create_task(get_feed_articles(feed, session)) for feed in RSS_FEEDS]
+    results = await asyncio.gather(*tasks)
+    await session.close()
+    return results
 
 app.config.from_object('rss_config')
 RSS_FEEDS=app.config['RSS_FEEDS']
