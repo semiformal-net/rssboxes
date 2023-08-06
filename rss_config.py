@@ -15,5 +15,6 @@ RSS_FEEDS = [
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
 'https://forums.redflagdeals.com/feed/forum/9',
 'https://www.trendhunter.com/rss/category/Social-Media-Trends',
-'https://muspy.com/feed?id=kif2s9yeljcx0rfwbbypigpbbyb71c'
+'https://muspy.com/feed?id=kif2s9yeljcx0rfwbbypigpbbyb71c',
+'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/musparse'
 ]
