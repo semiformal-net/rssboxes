@@ -16,5 +16,6 @@ RSS_FEEDS = [
 'https://forums.redflagdeals.com/feed/forum/9',
 'https://www.trendhunter.com/rss/category/Social-Media-Trends',
 'https://muspy.com/feed?id=kif2s9yeljcx0rfwbbypigpbbyb71c',
-'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/musparse'
+'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/musparse',
+'https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine.rss'
 ]
