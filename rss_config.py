@@ -14,5 +14,6 @@ RSS_FEEDS = [
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
 'https://forums.redflagdeals.com/feed/forum/9',
-'https://www.trendhunter.com/rss/category/Social-Media-Trends'
+'https://www.trendhunter.com/rss/category/Social-Media-Trends',
+'https://lemmy.world/feeds/all.xml?sort=TopDay'
 ]
