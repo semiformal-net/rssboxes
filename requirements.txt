@@ -2,3 +2,4 @@ Flask
 feedparser
 asyncio
 aiohttp
+gunicorn

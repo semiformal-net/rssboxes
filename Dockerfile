@@ -2,7 +2,6 @@ FROM python:3.10-slim
 ENV PYTHONUNBUFFERED 1
 COPY requirements.txt /
 RUN pip3 install -r /requirements.txt
-RUN pip3 install gunicorn
 COPY main.py /app/
 COPY rss_config.py /app/
 COPY templates /app/templates
