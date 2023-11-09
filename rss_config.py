@@ -8,7 +8,6 @@ RSS_FEEDS = [
 'http://feed.torrentfreak.com/Torrentfreak/',
 'https://motherboard.vice.com/en_us/rss',
 'http://feeds.feedburner.com/Mobilesyrup',
-'https://www.producthunt.com/feed?category=undefined',
 'http://feeds.wired.com/wired/index',
 'http://krebsonsecurity.com/feed/',
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
