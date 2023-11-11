@@ -26,7 +26,7 @@
 
         <div class="card">
           <div class="title" style="display: flex; justify-content: space-between">
-            <div class="title-l">{{ rss_feed_url }}</div>
+            <div id="title-{{ loop.index }}-content" class="title-l">{{ rss_feed_url }}</div>
             <div class="title-r"> <button onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
           </div>
           <div id="feed-{{ loop.index }}-content">Loading...</div>
@@ -80,9 +80,18 @@ function displayRssFeed(feedItems, containerId) {
   rssFeedContainer.innerHTML = content;
 }
 
+// Function to display the parsed feed items
+function titledisplayRssFeed(title, containerId) {
+  var rssFeedContainer = document.getElementById(containerId);
+  // set title
+  var content = title;
+  rssFeedContainer.innerHTML = content;
+}
+
 // Function to handle the refresh button click
 function refreshFeed(feedNumber) {
   var feedContainerId = "feed-" + feedNumber + "-content";
+  var titleContainerId = "title-" + feedNumber + "-content";
 
   // Display loading message
   document.getElementById(feedContainerId).innerHTML = "Loading...";
@@ -91,6 +100,7 @@ function refreshFeed(feedNumber) {
   makeAsyncRequest("/fetch_feed/" + feedNumber, function(error, response) {
     if (!error && response.success) {
       displayRssFeed(response.feed_items, feedContainerId);
+      titledisplayRssFeed(response.title, titleContainerId);
     } else {
       document.getElementById(feedContainerId).innerHTML = "Error loading feed: " + (response.error || 'Unknown error');
     }

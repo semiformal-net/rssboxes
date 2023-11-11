@@ -1,4 +1,4 @@
-from flask import Flask, render_template, jsonify
+from flask import Flask, render_template, jsonify, send_from_directory
 import feedparser
 import html
 from html.parser import HTMLParser
@@ -7,13 +7,6 @@ import requests
 import re
 
 app = Flask(__name__)
-
-# RSS feed URLs
-rss_feed_urls = [
-    "https://www.yahoo.com/news/rss",
-    "https://feeds.a.dj.com/rss/RSSWorldNews.xml",
-    "http://feeds.bbci.co.uk/news/video_and_audio/world/rss.xml"
-]
 
 def clean_summary(summary):
     cln=html.unescape(summary)
@@ -55,7 +48,6 @@ def fetch_feed(feed_number):
     try:
         # Fetch the RSS feed using the proxy server
         rss_feed_url = rss_feed_urls[feed_number - 1]
-        print(rss_feed_url)
         response = requests.get(rss_feed_url)
         xml_string = response.text
         feed_parsed = feedparser.parse(xml_string)
@@ -73,7 +65,7 @@ def fetch_feed(feed_number):
                 'url': entry.link
             })
 
-        return jsonify({'success': True, 'feed_items': feed_items})
+        return jsonify({'success': True, 'title': html.unescape(feed_parsed['feed']['title']), 'feed_items': feed_items})
     except Exception as e:
        return jsonify({'success': False, 'error': str(e)})
 
