@@ -22,25 +22,15 @@
       <div class="cards">
 
 
-        {% for feed in feeds %}
-
+       {% for rss_feed_url in rss_feed_urls %}
 
         <div class="card">
-          <div class="title">
-            <h2>{{ feed.title }}</h2>
+          <div class="title" style="display: flex; justify-content: space-between">
+            <div id="title-{{ loop.index }}-content" class="title-l">{{ rss_feed_url }}</div>
+            <div class="title-r"> <button onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
           </div>
-          <ul>
-            {% for article in feed.articles %}
-              <li>
-                <a href="{{ article.link }}" target="_blank">{{ article.title }}</a>
-                {% if article.summary is not none %}
-                <div class=subtext>{{article.summary}}</div>
-                {% endif %}
-              </li>
-            {% endfor %}
-          </ul>
+          <div id="feed-{{ loop.index }}-content">Loading...</div>
         </div>
-
         {% endfor %}
 
     </div>
@@ -52,6 +42,76 @@
       </a> Semiformal
       </p>
     </div>
+
+
+
+<script>
+// Function to make an asynchronous AJAX request
+function makeAsyncRequest(url, callback) {
+  var xhr = new XMLHttpRequest();
+  xhr.onreadystatechange = function() {
+    if (xhr.readyState == 4) {
+      if (xhr.status == 200) {
+        callback(null, JSON.parse(xhr.responseText));
+      } else {
+        callback("Error: " + xhr.status);
+      }
+    }
+  };
+  xhr.open("GET", url, true);
+  xhr.send();
+}
+
+// Function to display the parsed feed items
+function displayRssFeed(feedItems, containerId) {
+  var rssFeedContainer = document.getElementById(containerId);
+
+  // Display the first 5 items
+  var content = "<ul>";
+  for (var i = 0; i < feedItems.length; i++) {
+    var title = feedItems[i].title;
+    var summary = feedItems[i].summary;
+    var url = feedItems[i].url;
+
+    //content += "<div><h3>" + title + "</h3><p>" + summary + "</p><a href='" + url + "' target='_blank'>Read more</a></div>";
+    content += "<li> <a href='" + url + "' target='_blank'>" + title + "</a><div class=subtext>" + summary + "</div></li>"
+  }
+  content += "</ul>"
+  rssFeedContainer.innerHTML = content;
+}
+
+// Function to display the parsed feed items
+function titledisplayRssFeed(title, containerId) {
+  var rssFeedContainer = document.getElementById(containerId);
+  // set title
+  var content = title;
+  rssFeedContainer.innerHTML = content;
+}
+
+// Function to handle the refresh button click
+function refreshFeed(feedNumber) {
+  var feedContainerId = "feed-" + feedNumber + "-content";
+  var titleContainerId = "title-" + feedNumber + "-content";
+
+  // Display loading message
+  document.getElementById(feedContainerId).innerHTML = "Loading...";
+
+  // Make the asynchronous AJAX request to the Flask proxy
+  makeAsyncRequest("/fetch_feed/" + feedNumber, function(error, response) {
+    if (!error && response.success) {
+      displayRssFeed(response.feed_items, feedContainerId);
+      titledisplayRssFeed(response.title, titleContainerId);
+    } else {
+      document.getElementById(feedContainerId).innerHTML = "Error loading feed: " + (response.error || 'Unknown error');
+    }
+  });
+}
+
+// Trigger the feeds to load when the page loads
+{% for url in rss_feed_urls %}
+refreshFeed({{ loop.index }});
+{% endfor %}
+</script>
 
   </body>
 </html>
