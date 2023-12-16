@@ -48,6 +48,7 @@
 // Function to make an asynchronous AJAX request
 function makeAsyncRequest(url, callback) {
   var xhr = new XMLHttpRequest();
+  xhr.timeout = 30000; // timeout in ms
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
       if (xhr.status == 200) {
@@ -86,7 +87,6 @@ function titledisplayRssFeed(title, containerId) {
   var content = title;
   rssFeedContainer.innerHTML = content;
 }
-
 // Function to handle the refresh button click
 function refreshFeed(feedNumber) {
   var feedContainerId = "feed-" + feedNumber + "-content";
@@ -97,14 +97,23 @@ function refreshFeed(feedNumber) {
 
   // Make the asynchronous AJAX request to the Flask proxy
   makeAsyncRequest("/fetch_feed/" + feedNumber, function(error, response) {
+    console.log("feed",feedNumber);
+    console.log("Error:", error);
+    console.log("Response:", response);
+
+    if (!response) {
+      document.getElementById(feedContainerId).innerHTML = "No response";
+    }
+
     if (!error && response.success) {
       displayRssFeed(response.feed_items, feedContainerId);
       titledisplayRssFeed(response.title, titleContainerId);
     } else {
-      document.getElementById(feedContainerId).innerHTML = "Error loading feed: " + (response.error || 'Unknown error');
+      document.getElementById(feedContainerId).innerHTML = "Error loading feed: " + response.error;
     }
   });
 }
+
 
 // Trigger the feeds to load when the page loads
 {% for url in rss_feed_urls %}

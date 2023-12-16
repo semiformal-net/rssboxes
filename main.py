@@ -5,6 +5,7 @@ from html.parser import HTMLParser
 from io import StringIO
 import requests
 import re
+import os
 
 app = Flask(__name__)
 
@@ -45,31 +46,42 @@ def index():
 # Route to fetch and return the RSS feed as JSON
 @app.route('/fetch_feed/<int:feed_number>')
 def fetch_feed(feed_number):
+
+    # Fetch the RSS feed using the proxy server
+    if not ( (feed_number >= 1) and ( feed_number <= len(rss_feed_urls) ) ):
+        return jsonify({'success': False, 'error': 'feed index out of range: {}'.format(feed_number)})
+    rss_feed_url = rss_feed_urls[feed_number - 1]
+    if not rss_feed_url.startswith('http'):
+        return jsonify({'success': False, 'error': 'Bad url: {}'.format(rss_feed_url)})
+    response = requests.get(rss_feed_url,headers={'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0','accept': '*/*'})
+    if not response.ok:
+        return jsonify({'success': False, 'error': 'Server returned: {}'.format(response.status_code)})
+    xml_string = response.text
+    if len(xml_string)<100:
+        return jsonify({'success': False, 'error': 'Bad feed data (response 2short)'})
     try:
-        # Fetch the RSS feed using the proxy server
-        rss_feed_url = rss_feed_urls[feed_number - 1]
-        response = requests.get(rss_feed_url,headers={'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0','accept': '*/*'})
-        if not response.ok:
-            return jsonify({'success': False, 'error': 'Server returned: {}'.format(response.status_code)})
-        xml_string = response.text
         feed_parsed = feedparser.parse(xml_string)
+    except:
+        return jsonify({'success': False, 'error': 'unable to parse'})
 
-        # Extract relevant information from the parsed feed
-        feed_items = []
-        for entry in feed_parsed.entries[:5]:  # Get the top 5 entries
-            if 'summary' in entry.keys():
-                s=clean_summary(entry.summary)
-            else:
-                s=""
-            feed_items.append({
-                'title': html.unescape(entry.title),
-                'summary': s,
-                'url': entry.link
-            })
+    # Extract relevant information from the parsed feed
+    feed_items = []
+    for entry in feed_parsed.entries[:5]:  # Get the top 5 entries
+        if not 'title' in entry.keys():
+            return jsonify({'success': False, 'error': 'Feed missing title key'})
+        if not 'link' in entry.keys():
+            return jsonify({'success': False, 'error': 'Feed missing url key'})
+        if 'summary' in entry.keys():
+            s=clean_summary(entry.summary)
+        else:
+            s=""
+        feed_items.append({
+            'title': html.unescape(entry.title),
+            'summary': s,
+            'url': html.unescape(entry.link),
+        })
 
-        return jsonify({'success': True, 'title': html.unescape(feed_parsed['feed']['title']), 'feed_items': feed_items})
-    except Exception as e:
-       return jsonify({'success': False, 'error': str(e)})
+    return jsonify({'success': True, 'title': html.unescape(feed_parsed['feed']['title']), 'feed_items': feed_items})
 
 @app.route('/static/<path:filename>')
 def serve_static(filename):
