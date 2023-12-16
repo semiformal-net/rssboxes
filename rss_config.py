@@ -15,6 +15,6 @@ RSS_FEEDS = [
 'https://forums.redflagdeals.com/feed/forum/9',
 'https://muspy.com/feed?id=kif2s9yeljcx0rfwbbypigpbbyb71c',
 'https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine.rss',
-'https://kagi.com/api/v1/smallweb/feed',
+'https://kagi.com/smallweb/appreciated',
 'https://daily.jstor.org/feed'
 ]
