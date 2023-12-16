@@ -26,7 +26,7 @@
         <div class="card">
           <div class="title" style="display: flex; justify-content: space-between">
             <div id="title-{{ loop.index }}-content" class="title-l">{{ rss_feed_url }}</div>
-            <div class="title-r"> <button onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
+            <div class="title-r"> <button class="btnr" onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
           </div>
           <div id="feed-{{ loop.index }}-content">Loading...</div>
         </div>

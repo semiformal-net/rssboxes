@@ -1,7 +1,7 @@
 RSS_FEEDS = [
 'https://www.yahoo.com/news/rss',
 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
-'http://feeds.bbci.co.uk/news/video_and_audio/world/rss.xml',
+'https://feeds.bbci.co.uk/news/video_and_audio/world/rss.xml',
 'http://rss.cbc.ca/lineup/canada.xml',
 'https://rss-bridge.org/bridge01/?action=display&bridge=ReutersBridge&feed=home%2Ftopnews&format=Atom',
 'https://news.ycombinator.com/rss',

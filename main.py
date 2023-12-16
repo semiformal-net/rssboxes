@@ -48,7 +48,9 @@ def fetch_feed(feed_number):
     try:
         # Fetch the RSS feed using the proxy server
         rss_feed_url = rss_feed_urls[feed_number - 1]
-        response = requests.get(rss_feed_url)
+        response = requests.get(rss_feed_url,headers={'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0','accept': '*/*'})
+        if not response.ok:
+            return jsonify({'success': False, 'error': 'Server returned: {}'.format(response.status_code)})
         xml_string = response.text
         feed_parsed = feedparser.parse(xml_string)
 
