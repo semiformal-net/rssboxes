@@ -6,6 +6,10 @@ from io import StringIO
 import requests
 import re
 import os
+# service-to-service auth
+import google.auth.transport.requests
+import google.oauth2.id_token
+
 
 app = Flask(__name__)
 
@@ -53,7 +57,19 @@ def fetch_feed(feed_number):
     rss_feed_url = rss_feed_urls[feed_number - 1]
     if not rss_feed_url.startswith('http'):
         return jsonify({'success': False, 'error': 'Bad url: {}'.format(rss_feed_url)})
-    response = requests.get(rss_feed_url,headers={'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0','accept': '*/*'})
+    headers={'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0','accept': '*/*'}
+
+    # if the url contains cloudfunctions.net then get an auth token
+    # and add it to the header when requesting
+    if 'cloudfunctions.net' in rss_feed_url:
+        print('Debug: calling auth')
+        auth_req = google.auth.transport.requests.Request()
+        id_token = google.oauth2.id_token.fetch_id_token(auth_req, rss_feed_url)
+        headers["Authorization"]= f"Bearer {id_token}"
+        print('Debug: auth {}'.format(f"Bearer {id_token}")) # dont do this
+
+
+    response = requests.get(rss_feed_url,headers=headers)
     if not response.ok:
         return jsonify({'success': False, 'error': 'Server returned: {}'.format(response.status_code)})
     xml_string = response.text

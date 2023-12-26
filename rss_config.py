@@ -16,5 +16,6 @@ RSS_FEEDS = [
 'https://muspy.com/feed?id=kif2s9yeljcx0rfwbbypigpbbyb71c',
 'https://www.bloomberg.com/opinion/authors/ARbTQlRLRjE/matthew-s-levine.rss',
 'https://kagi.com/smallweb/appreciated',
-'https://daily.jstor.org/feed'
+'https://daily.jstor.org/feed',
+'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/redrss'
 ]
