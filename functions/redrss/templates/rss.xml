@@ -1,0 +1,24 @@
+<?xml version="1.0"?>
+<rss version="2.0"
+     xmlns:atom="http://www.w3.org/2005/Atom"
+     xmlns:dc="http://purl.org/dc/elements/1.1/">
+  <channel>
+    <title>Top music</title>
+    <link>{{ baseurl + 'feed' }}</link>
+    <atom:link href="{{ baseurl + 'feed' }}" rel="self" type="application/rss+xml" />
+    <description>A selection of top music</description>
+    <pubDate>Dec 25, 2023</pubDate>
+    <docs>http://blogs.law.harvard.edu/tech/rss</docs>
+
+    {% for record in records %}
+      <item>
+         <title>{{record['artist']}} - {{record['groupName']}} ({{record['year']}}, {{releasetypes[ record['releaseType'] ]}})</title>
+         <description>{{record['tags']}}</description>
+         <link>https://open.spotify.com/search/artist:{{record['artist']}}%20album:{{record['groupName']}}%20year:{{record['year']}}</link>
+         <guid isPermaLink="false">{{ guid }}</guid>
+         <dc:creator><![CDATA[topmusic!]]></dc:creator>
+      </item>
+    {% endfor %}
+
+  </channel>
+</rss>
