@@ -14,7 +14,7 @@
       <item>
          <title>{{record['artist']}} - {{record['groupName']}} ({{record['year']}}, {{releasetypes[ record['releaseType'] ]}})</title>
          <description>{{record['tags']}}</description>
-         <link>https://open.spotify.com/search/artist:{{record['artist']}}%20album:{{record['groupName']}}%20year:{{record['year']}}</link>
+         <link>{{record['link']}}</link>
          <guid isPermaLink="false">{{ guid }}</guid>
          <dc:creator><![CDATA[topmusic!]]></dc:creator>
       </item>
