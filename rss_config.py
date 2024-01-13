@@ -1,5 +1,4 @@
 RSS_FEEDS = [
-'https://www.yahoo.com/news/rss',
 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
 'https://feeds.bbci.co.uk/news/world/rss.xml',
 'http://rss.cbc.ca/lineup/canada.xml',
@@ -20,5 +19,6 @@ RSS_FEEDS = [
 'https://daily.jstor.org/feed',
 'https://newsletter.rodeo/feeds/074dl5kuffv304ou.xml',
 'https://cecily-feed.nfshost.com/cecily.xml',
-'https://stratechery.passport.online/feed/rss/Pma3rbdwbdqyGXKspc3ccw'
+'https://stratechery.passport.online/feed/rss/Pma3rbdwbdqyGXKspc3ccw',
+'https://www.yahoo.com/news/rss'
 ]
