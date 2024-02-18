@@ -21,5 +21,5 @@ RSS_FEEDS = [
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://stratechery.passport.online/feed/rss/Pma3rbdwbdqyGXKspc3ccw',
 'https://www.yahoo.com/news/rss',
-'https://www.science.org/digital-feed/pipeline'
+'https://www.science.org/blogs/pipeline/feed'
 ]
