@@ -20,5 +20,6 @@ RSS_FEEDS = [
 'https://newsletter.rodeo/feeds/074dl5kuffv304ou.xml',
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://stratechery.passport.online/feed/rss/Pma3rbdwbdqyGXKspc3ccw',
-'https://www.yahoo.com/news/rss'
+'https://www.yahoo.com/news/rss',
+'https://www.science.org/digital-feed/pipeline'
 ]
