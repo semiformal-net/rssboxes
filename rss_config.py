@@ -5,7 +5,6 @@ RSS_FEEDS = [
 'https://rss-bridge.org/bridge01/?action=display&bridge=ReutersBridge&feed=home%2Ftopnews&format=Atom',
 'https://news.ycombinator.com/rss',
 'http://feed.torrentfreak.com/Torrentfreak/',
-'https://motherboard.vice.com/en_us/rss',
 'http://feeds.feedburner.com/Mobilesyrup',
 'http://feeds.wired.com/wired/index',
 'http://krebsonsecurity.com/feed/',
