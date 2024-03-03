@@ -11,7 +11,6 @@ RSS_FEEDS = [
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
 'https://forums.redflagdeals.com/feed/forum/9',
-'https://muspy.com/feed?id=kif2s9yeljcx0rfwbbypigpbbyb71c',
 'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/redrss',
 'https://newsletter.rodeo/feeds/wpg8rbiq4o2tvsss.xml',
 'https://kagi.com/smallweb/appreciated',
