@@ -6,7 +6,7 @@ RSS_FEEDS = [
 'https://news.ycombinator.com/rss',
 'http://feed.torrentfreak.com/Torrentfreak/',
 'http://feeds.feedburner.com/Mobilesyrup',
-'http://feeds.wired.com/wired/index',
+'https://www.wired.com/feed/rss',
 'http://krebsonsecurity.com/feed/',
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
