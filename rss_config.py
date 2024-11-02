@@ -1,6 +1,7 @@
 RSS_FEEDS = [
 'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
 'https://feeds.bbci.co.uk/news/world/rss.xml',
+'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business',
 'http://rss.cbc.ca/lineup/canada.xml',
 'https://news.ycombinator.com/rss',
 'http://feed.torrentfreak.com/Torrentfreak/',
