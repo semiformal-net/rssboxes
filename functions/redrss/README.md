@@ -25,8 +25,8 @@ gcloud functions deploy redrss \
 --no-allow-unauthenticated \
 --no-gen2 --region=northamerica-northeast1 \
 --runtime=python311 --entry-point=main \
---set-secrets=RSS_SRC=RSS_SRC:1,baseurl=baseurl:1,RED_API_KEY=RED_API_KEY:1,b64client=b64client:1,refresh_token=refresh_token:1 \
---trigger-http
+--set-secrets=RSS_SRC=RSS_SRC:2,baseurl=baseurl:1,RED_API_KEY=RED_API_KEY:1,b64client=b64client:1,refresh_token=refresh_token:1 \
+--trigger-http --project=rssboxes-382506
 ```
 
 ## Add to main rssboxes site
