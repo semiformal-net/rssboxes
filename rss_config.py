@@ -20,5 +20,6 @@ RSS_FEEDS = [
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://www.yahoo.com/news/rss',
 'https://www.science.org/blogs/pipeline/feed',
-'https://newsletter.rodeo/feeds/tw51yjtgdhlsr2od.xml'
+'https://newsletter.rodeo/feeds/tw51yjtgdhlsr2od.xml',
+'https://zapier.com/engine/rss/17351746/fintech33455'
 ]
