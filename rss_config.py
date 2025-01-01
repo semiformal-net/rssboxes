@@ -13,13 +13,11 @@ RSS_FEEDS = [
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
 'https://forums.redflagdeals.com/feed/forum/9',
 'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/redrss',
-'https://newsletter.rodeo/feeds/wpg8rbiq4o2tvsss.xml',
+'http://www.pipes.digital/feed/pO7rdLN5',
 'https://kagi.com/smallweb/appreciated',
 'https://daily.jstor.org/feed',
-'https://newsletter.rodeo/feeds/074dl5kuffv304ou.xml',
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://www.yahoo.com/news/rss',
 'https://www.science.org/blogs/pipeline/feed',
-'https://newsletter.rodeo/feeds/tw51yjtgdhlsr2od.xml',
 'https://newsletter.rodeo/feeds/a2ybv0474n4b40cm.xml'
 ]
