@@ -7,7 +7,6 @@ RSS_FEEDS = [
 'http://feed.torrentfreak.com/Torrentfreak/',
 'http://feeds.feedburner.com/Mobilesyrup',
 'https://www.wired.com/feed/rss',
-'https://www.nhc.noaa.gov/index-at.xml',
 'http://krebsonsecurity.com/feed/',
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
 'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
