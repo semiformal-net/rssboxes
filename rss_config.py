@@ -1,5 +1,5 @@
 RSS_FEEDS = [
-'https://feeds.a.dj.com/rss/RSSWorldNews.xml',
+'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
 'https://feeds.bbci.co.uk/news/world/rss.xml',
 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business',
 'http://rss.cbc.ca/lineup/canada.xml',
@@ -9,7 +9,7 @@ RSS_FEEDS = [
 'https://www.wired.com/feed/rss',
 'http://krebsonsecurity.com/feed/',
 'https://mshibanami.github.io/GitHubTrendingRSS/daily/all.xml',
-'https://feeds.a.dj.com/rss/WSJcomUSBusiness.xml',
+'https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness',
 'https://forums.redflagdeals.com/feed/forum/9',
 'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/redrss',
 'http://www.pipes.digital/feed/pO7rdLN5',
