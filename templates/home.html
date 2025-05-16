@@ -47,7 +47,7 @@
 <script>
 // Function to make an asynchronous AJAX request
 function makeAsyncRequest(url, callback) {
-  var xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
   xhr.timeout = 30000; // timeout in ms
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
