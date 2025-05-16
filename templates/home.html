@@ -27,7 +27,7 @@
         <div class="card">
           <div class="title" style="display: flex; justify-content: space-between">
             <div id="title-{{ loop.index }}-content" class="title-l">{{ rss_feed_url }}</div>
-            <div class="title-r"> <button class="btnr" onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
+            <div class="title-r"> <button type="button" class="btnr" onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
           </div>
           <div id="feed-{{ loop.index }}-content">Loading...</div>
         </div>
@@ -38,7 +38,7 @@
     <div class="bottombanner">
       <p>
       <a href="https://github.com/semiformal-net/rssboxes" target="_blank">
-       <button class="btn"><i class="fa fa-github fa-lg" aria-hidden="true"></i></button>
+       <button type="button" class="btn"><i class="fa fa-github fa-lg" aria-hidden="true"></i></button>
       </a> Semiformal
       </p>
     </div>
