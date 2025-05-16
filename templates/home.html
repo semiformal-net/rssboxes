@@ -13,13 +13,13 @@
 
   </head>
   <body>
-      <div class="head">
+      <header class="head">
         <div class="headerobjectswrapper">
             <header>BOXED NEWS NOW</header>
         </div>
-      </div>
+      </header>
 
-      <div class="cards">
+      <main class="cards">
 
 
        {% for rss_feed_url in rss_feed_urls %}
@@ -33,15 +33,15 @@
         </div>
         {% endfor %}
 
-    </div>
+    </main>
 
-    <div class="bottombanner">
+    <footer class="bottombanner">
       <p>
       <a href="https://github.com/semiformal-net/rssboxes" target="_blank">
        <button type="button" class="btn"><i class="fa fa-github fa-lg" aria-hidden="true"></i></button>
       </a> Semiformal
       </p>
-    </div>
+    </footer>
 
 
 
