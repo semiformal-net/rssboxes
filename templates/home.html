@@ -1,24 +1,25 @@
 <!DOCTYPE html>
-<html>
+<html lang="en">
   <head>
     <meta charset="utf-8" />
     <title>rss boxes</title>
-    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet" />
+    <link rel="preload" href="https://fonts.googleapis.com/css?family=Roboto:400,700" as="style">
+    <link href="https://fonts.googleapis.com/css?family=Roboto:400,700" rel="stylesheet">
     <!-- Add icon library -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" media="all">
     <link rel="shortcut icon" href="{{ url_for('serve_favicon') }}">
     <link rel="stylesheet" type="text/css" href="/static/style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
 
   </head>
   <body>
-      <div class="head">
+      <header class="head">
         <div class="headerobjectswrapper">
             <header>BOXED NEWS NOW</header>
         </div>
-      </div>
+      </header>
 
-      <div class="cards">
+      <main class="cards">
 
 
        {% for rss_feed_url in rss_feed_urls %}
@@ -26,28 +27,28 @@
         <div class="card">
           <div class="title" style="display: flex; justify-content: space-between">
             <div id="title-{{ loop.index }}-content" class="title-l">{{ rss_feed_url }}</div>
-            <div class="title-r"> <button class="btnr" onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
+            <div class="title-r"> <button type="button" class="btnr" onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
           </div>
           <div id="feed-{{ loop.index }}-content">Loading...</div>
         </div>
         {% endfor %}
 
-    </div>
+    </main>
 
-    <div class="bottombanner">
+    <footer class="bottombanner">
       <p>
       <a href="https://github.com/semiformal-net/rssboxes" target="_blank">
-       <button class="btn"><i class="fa fa-github fa-lg" aria-hidden="true"></i></button>
+       <button type="button" class="btn"><i class="fa fa-github fa-lg" aria-hidden="true"></i></button>
       </a> Semiformal
       </p>
-    </div>
+    </footer>
 
 
 
 <script>
 // Function to make an asynchronous AJAX request
 function makeAsyncRequest(url, callback) {
-  var xhr = new XMLHttpRequest();
+  const xhr = new XMLHttpRequest();
   xhr.timeout = 30000; // timeout in ms
   xhr.onreadystatechange = function() {
     if (xhr.readyState == 4) {
