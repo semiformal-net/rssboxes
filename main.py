@@ -1,43 +1,56 @@
-from flask import Flask, render_template, jsonify, send_from_directory
-import feedparser
-import html
-from html.parser import HTMLParser
-from io import StringIO
-import requests
 import re
 import os
+import html
+from io import StringIO
+from html.parser import HTMLParser
+
+from flask import Flask, render_template, jsonify, send_from_directory
+import feedparser
+import requests
+from bs4 import BeautifulSoup
+
 # service-to-service auth
 import google.auth.transport.requests
 import google.oauth2.id_token
 
-
 app = Flask(__name__)
 
-def clean_summary(summary):
-    cln=html.unescape(summary)
-    cln=strip_tags(cln)
-    cln=cln.strip()
-    # look for the first sentence or the first line and grab that,
-    #  then trim the result to 200char
-    rcln=re.split(r'\n|(?<!\.[A-Z])[\.\!\?]\s',cln)[0][0:200]
-    return(rcln)
+def clean_summary(summary: str, max_length: int = 200) -> str:
+    """
+    Cleans and truncates an RSS summary:
+    - Strips HTML using BeautifulSoup
+    - Unescapes HTML entities
+    - Extracts the first sentence or line
+    - Truncates cleanly at word boundaries up to `max_length`
+    """
+    if not summary:
+        return ""
 
-class MLStripper(HTMLParser):
-    def __init__(self):
-        super().__init__()
-        self.reset()
-        self.strict = False
-        self.convert_charrefs= True
-        self.text = StringIO()
-    def handle_data(self, d):
-        self.text.write(d)
-    def get_data(self):
-        return self.text.getvalue()
+    # Remove HTML tags and unescape entities
+    text = BeautifulSoup(summary, "html.parser").get_text()
+    text = html.unescape(text).strip()
 
-def strip_tags(html):
-    s = MLStripper()
-    s.feed(html)
-    return s.get_data()
+    # Use regex to split into sentences or lines
+    parts = re.split(r'(?<=[.!?])\s+|\n', text)
+
+    for part in parts:
+        clean_part = part.strip()
+        if clean_part:
+            return truncate_at_word_boundary(clean_part, max_length)
+
+    # Fallback if no clean sentence found
+    return truncate_at_word_boundary(text, max_length)
+
+def truncate_at_word_boundary(text: str, max_length: int) -> str:
+    """
+    Truncates the text at the last word boundary before max_length.
+    Appends ellipsis if truncation occurs.
+    """
+    if len(text) <= max_length:
+        return text
+
+    truncated = text[:max_length].rsplit(' ', 1)[0]
+    return truncated.rstrip('.!?') + '...'
 
 app.config.from_object('rss_config')
 rss_feed_urls=app.config['RSS_FEEDS']
@@ -55,8 +68,9 @@ def fetch_feed(feed_number):
     if not ( (feed_number >= 1) and ( feed_number <= len(rss_feed_urls) ) ):
         return jsonify({'success': False, 'error': 'feed index out of range: {}'.format(feed_number)})
     rss_feed_url = rss_feed_urls[feed_number - 1]
-    if not rss_feed_url.startswith('http'):
-        return jsonify({'success': False, 'error': 'Bad url: {}'.format(rss_feed_url)})
+    URL_REGEX = re.compile(r'^https?://[^\s/$.?#].[^\s]*$', re.IGNORECASE)
+    if not URL_REGEX.match(rss_feed_url):
+        return jsonify({'success': False, 'error': 'Malformed URL'})
     headers={'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0','accept': '*/*'}
 
     # if the url contains cloudfunctions.net then get an auth token
@@ -66,8 +80,6 @@ def fetch_feed(feed_number):
         auth_req = google.auth.transport.requests.Request()
         id_token = google.oauth2.id_token.fetch_id_token(auth_req, rss_feed_url)
         headers["Authorization"]= f"Bearer {id_token}"
-        print('Debug: auth {}'.format(f"Bearer {id_token}")) # dont do this
-
 
     response = requests.get(rss_feed_url,headers=headers)
     if not response.ok:
@@ -83,11 +95,15 @@ def fetch_feed(feed_number):
     # Extract relevant information from the parsed feed
     feed_items = []
     for entry in feed_parsed.entries[:5]:  # Get the top 5 entries
-        if not 'title' in entry.keys():
+        if not 'title' in entry:
             return jsonify({'success': False, 'error': 'Feed missing title key'})
-        if not 'link' in entry.keys():
+        if not 'link' in entry:
             return jsonify({'success': False, 'error': 'Feed missing url key'})
-        if 'summary' in entry.keys():
+        required_keys = ['title', 'link']
+        for key in required_keys:
+            if key not in entry:
+                return jsonify({'success': False, 'error': f'Missing expected field: {key}'})
+        if 'summary' in entry:
             s=clean_summary(entry.summary)
         else:
             s=""
