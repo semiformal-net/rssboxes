@@ -24,12 +24,15 @@ body {
   }
 
 :root {
+  /* Color Palette definition */
+  /* I also use white and black which are hardcoded */
   --primary: #404751;       /* Steel Blue Grey */
   --secondary: #B57265;     /* Cinnamon Blush */
   --accent: #D4AF37;        /* Dusty Gold */
   --bg: #B0B8C1;            /* Misty Silver */
   --text: #6C7A89;          /* Slate Blue */
   --highlight: #5EEAD4;     /* Aqua Mint */
+  --hinting: #f5f5f5        /* white smoke */
 }
 
 p {
@@ -70,13 +73,13 @@ h2 {
 }
 
 a {
-  color: var(--primary);
+  color: black;
   text-decoration: none;
   font-size: 14px;
 }
 
 a:hover {
-  color: var(--text);
+  color: var(--primary);
 }
 
 ul {
@@ -105,8 +108,21 @@ li {
   padding: 60px 0;
   text-transform: uppercase;
   line-height: 1;
-  user-select: none; /* optional: prevent text highlight */
   margin: 0;
+}
+
+footer {
+  margin: 0;
+  padding: 6px;
+  text-align: center;
+  background: var(--text);
+  border-style: solid;
+  border-width: 1px;
+  border-color: black;
+  color: white;
+}
+footer a {
+  color: white;
 }
 
 .card {
@@ -148,7 +164,7 @@ li {
 }
 
 li:hover {
-  background-color: #f5f5f5;
+  background-color: var(--hinting);
 }
 
 .cards {
@@ -157,20 +173,6 @@ li:hover {
   max-width: 1800px;
   margin: 16px auto;
   gap: 12px;
-}
-
-.bottombanner {
-  margin: auto;
-  padding: 20px 0;
-  text-align: center;
-  background: DarkRed;
-  border-style: solid;
-  border-width: 1px;
-  border-color: black;
-  color: white;
-}
-.bottombanner a {
-  color: white;
 }
 
  /* Style buttons */
