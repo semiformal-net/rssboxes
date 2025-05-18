@@ -112,10 +112,12 @@ function refreshFeed(feedNumber) {
 }
 
 
-// Trigger the feeds to load when the page loads
-{% for url in rss_feed_urls %}
-refreshFeed({{ loop.index }});
-{% endfor %}
+window.onload = function () {
+  const feedCount = {{ rss_feed_urls | length }};
+  for (let i = 1; i <= feedCount; i++) {
+    refreshFeed(i);
+  }
+};
 </script>
 
   </body>
