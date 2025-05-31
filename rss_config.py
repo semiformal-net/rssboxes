@@ -20,5 +20,6 @@ RSS_FEEDS = [
 'https://www.science.org/blogs/pipeline/feed',
 'https://newsletter.rodeo/feeds/a2ybv0474n4b40cm.xml',
 'https://newsletter.rodeo/feeds/rt5u61gheoje50ey.xml',
-'https://newsletter.rodeo/feeds/1s36b99jtl7xhulq.xml'
+'https://newsletter.rodeo/feeds/1s36b99jtl7xhulq.xml',
+'https://newsletter.rodeo/feeds/bzp8dxz6scjzc5zz.xml'
 ]
