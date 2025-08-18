@@ -14,6 +14,7 @@ RSS_FEEDS = [
 'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/redrss',
 'http://www.pipes.digital/feed/pO7rdLN5',
 'https://kagi.com/smallweb/appreciated',
+'https://variety.com/v/tv/reviews/feed/',
 'https://daily.jstor.org/feed',
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://www.science.org/blogs/pipeline/feed',
