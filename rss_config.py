@@ -18,5 +18,6 @@ RSS_FEEDS = [
 'https://daily.jstor.org/feed',
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://www.science.org/blogs/pipeline/feed',
-'https://newsletter.rodeo/feeds/5mf9c2wp0hgxefru.xml'
+'https://newsletter.rodeo/feeds/5mf9c2wp0hgxefru.xml',
+'https://newsletter.rodeo/feeds/2a044fqcxpev425p.xml'
 ]
