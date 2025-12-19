@@ -7,7 +7,6 @@ from html.parser import HTMLParser
 from flask import Flask, render_template, jsonify, send_from_directory
 import feedparser
 import requests
-from bs4 import BeautifulSoup
 
 # service-to-service auth
 import google.auth.transport.requests
@@ -15,10 +14,27 @@ import google.oauth2.id_token
 
 app = Flask(__name__)
 
+class StrippingParser(HTMLParser):
+    def __init__(self):
+        super().__init__()
+        self.parts = []
+
+    def handle_data(self, data):
+        self.parts.append(data)
+
+    def get_text(self):
+        return "".join(self.parts)
+
+def html_to_text(s: str) -> str:
+    parser = StrippingParser()
+    parser.feed(s)
+    return html.unescape(parser.get_text()).strip()
+
+
 def clean_summary(summary: str, max_length: int = 200) -> str:
     """
     Cleans and truncates an RSS summary:
-    - Strips HTML using BeautifulSoup
+    - Strips HTML
     - Unescapes HTML entities
     - Extracts the first sentence or line
     - Truncates cleanly at word boundaries up to `max_length`
@@ -27,8 +43,7 @@ def clean_summary(summary: str, max_length: int = 200) -> str:
         return ""
 
     # Remove HTML tags and unescape entities
-    text = BeautifulSoup(summary, "html.parser").get_text()
-    text = html.unescape(text).strip()
+    text = html_to_text(summary)
 
     # Mask common abbreviations so sentence splitting doesn't treat them as boundaries.
     abbrev_token = "<DOT>"
