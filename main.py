@@ -30,16 +30,26 @@ def clean_summary(summary: str, max_length: int = 200) -> str:
     text = BeautifulSoup(summary, "html.parser").get_text()
     text = html.unescape(text).strip()
 
+    # Mask common abbreviations so sentence splitting doesn't treat them as boundaries.
+    abbrev_token = "<DOT>"
+    abbreviations = (
+        "Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Sr.", "Jr.",
+        "St.", "vs.", "etc.", "e.g.", "i.e.", "U.S.", "U.K.",
+    )
+    for abbr in abbreviations:
+        pattern = re.compile(re.escape(abbr), re.IGNORECASE)
+        text = pattern.sub(lambda m: m.group(0).replace(".", abbrev_token), text)
+
     # Use regex to split into sentences or lines
     parts = re.split(r'(?<=[.!?])\s+|\n', text)
 
     for part in parts:
-        clean_part = part.strip()
+        clean_part = part.replace(abbrev_token, ".").strip()
         if clean_part:
             return truncate_at_word_boundary(clean_part, max_length)
 
     # Fallback if no clean sentence found
-    return truncate_at_word_boundary(text, max_length)
+    return truncate_at_word_boundary(text.replace(abbrev_token, "."), max_length)
 
 def truncate_at_word_boundary(text: str, max_length: int) -> str:
     """
@@ -49,8 +59,22 @@ def truncate_at_word_boundary(text: str, max_length: int) -> str:
     if len(text) <= max_length:
         return text
 
-    truncated = text[:max_length].rsplit(' ', 1)[0]
-    return truncated.rstrip('.!?') + '...'
+    # Prefer the last whitespace boundary, but fall back to a hard cut for long words.
+    cut = None
+    for match in re.finditer(r'\s+', text[:max_length + 1]):
+        cut = match.start()
+    if cut is None or cut < max_length * 0.5:
+        cut = max_length
+
+    truncated = text[:cut].rstrip()
+    if not truncated:
+        truncated = text[:max_length].rstrip()
+    if not truncated:
+        return "..." if max_length > 0 else ""
+
+    if truncated[-1] in ".!?":
+        truncated = truncated[:-1]
+    return truncated + "..."
 
 app.config.from_object('rss_config')
 rss_feed_urls=app.config['RSS_FEEDS']
@@ -127,5 +151,4 @@ def serve_favicon():
 
 if __name__ == '__main__':
     app.run(port=8080)
-
 
