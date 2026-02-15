@@ -4,6 +4,7 @@ RSS_FEEDS = [
 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business',
 'http://rss.cbc.ca/lineup/canada.xml',
 'https://news.ycombinator.com/rss',
+'https://news.kagi.com/usa.xml',
 'http://feed.torrentfreak.com/Torrentfreak/',
 'http://feeds.feedburner.com/Mobilesyrup',
 'https://www.wired.com/feed/rss',
@@ -18,6 +19,5 @@ RSS_FEEDS = [
 'https://daily.jstor.org/feed',
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://www.science.org/blogs/pipeline/feed',
-'https://newsletter.rodeo/feeds/5mf9c2wp0hgxefru.xml',
-'https://newsletter.rodeo/feeds/2a044fqcxpev425p.xml'
+'https://newsletter.rodeo/feeds/5mf9c2wp0hgxefru.xml'
 ]
