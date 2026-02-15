@@ -133,24 +133,23 @@ def fetch_feed(feed_number):
 
     # Extract relevant information from the parsed feed
     feed_items = []
-    for entry in feed_parsed.entries[:5]:  # Get the top 5 entries
-        if not 'title' in entry:
-            return jsonify({'success': False, 'error': 'Feed missing title key'})
-        if not 'link' in entry:
-            return jsonify({'success': False, 'error': 'Feed missing url key'})
-        required_keys = ['title', 'link']
-        for key in required_keys:
-            if key not in entry:
-                return jsonify({'success': False, 'error': f'Missing expected field: {key}'})
-        if 'summary' in entry:
-            s=clean_summary(entry.summary)
-        else:
-            s=""
+    for entry in feed_parsed.entries:
+        title = entry.get('title')
+        link = entry.get('link')
+
+        # Skip malformed entries that don't have required fields.
+        if not title or not link:
+            continue
+
+        summary = clean_summary(entry.get('summary', ""))
         feed_items.append({
-            'title': html.unescape(entry.title),
-            'summary': s,
-            'url': html.unescape(entry.link),
+            'title': html.unescape(title),
+            'summary': summary,
+            'url': html.unescape(link),
         })
+
+        if len(feed_items) == 5:
+            break
 
     return jsonify({'success': True, 'title': html.unescape(feed_parsed['feed']['title']), 'feed_items': feed_items})
 
@@ -166,4 +165,3 @@ def serve_favicon():
 
 if __name__ == '__main__':
     app.run(port=8080)
-
