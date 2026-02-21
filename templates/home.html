@@ -3,122 +3,502 @@
   <head>
     <meta charset="utf-8" />
     <title>rss boxes</title>
-    <link rel="preload" href="https://fonts.googleapis.com/css?family=Roboto:400,700" as="style">
-    <link href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Inter:wght@100;200;400;700&display=swap" rel="stylesheet">
-    <!-- Add icon library -->
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/4.7.0/css/font-awesome.min.css" media="all">
-    <link rel="shortcut icon" href="{{ url_for('serve_favicon') }}">
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Serif+Display:ital@0;1&family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" type="image/svg+xml" href="{{ url_for('serve_favicon_svg') }}">
+    <link rel="alternate icon" href="{{ url_for('serve_favicon') }}">
     <link rel="stylesheet" type="text/css" href="/static/style.css">
     <meta name="viewport" content="width=device-width, initial-scale=1">
-
   </head>
   <body>
-      <header class="top-header">
-        BOXED NEWS NOW
-      </header>
+    <header class="masthead">
+      <div class="masthead-desktop">BOXED NEWS NOW</div>
+      <div class="masthead-mobile">BOXED NEWS NOW</div>
+    </header>
 
-      <main class="cards">
+    <main class="page">
+      <section class="toolbar" aria-label="Dashboard controls">
+        <button id="toggle-customize" class="btn btn-primary" type="button">Customize</button>
+        <button id="refresh-visible" class="btn" type="button">Refresh Visible</button>
+        <button id="restore-defaults" class="btn btn-danger" type="button">Restore Defaults</button>
+      </section>
 
+      <section id="customize-panel" class="customize-panel hidden" aria-label="Customize feed dashboard">
+        <h2>Customize Dashboard</h2>
+        <form id="add-feed-form" class="add-feed-form">
+          <label for="feed-url-input">Add custom RSS feed URL</label>
+          <input id="feed-url-input" type="url" placeholder="https://example.com/rss.xml" required>
+          <label for="feed-label-input">Optional label</label>
+          <input id="feed-label-input" type="text" maxlength="80" placeholder="My feed">
+          <button class="btn btn-primary" type="submit">Add Feed</button>
+          <p id="add-feed-error" class="form-error hidden"></p>
+        </form>
 
-       {% for rss_feed_url in rss_feed_urls %}
-
-        <div class="card">
-          <div class="title">
-            <div id="title-{{ loop.index }}-content" class="title-l">{{ rss_feed_url }}</div>
-            <div class="title-r"> <button type="button" class="btnr" onclick="refreshFeed({{ loop.index }})"><i class="fa fa-refresh" aria-hidden="true"></i></button></div>
+        <div class="customize-groups">
+          <div class="customize-group">
+            <h3>Default feeds</h3>
+            <ul id="default-feed-list" class="feed-toggle-list"></ul>
           </div>
-          <div id="feed-{{ loop.index }}-content">Loading...</div>
+          <div class="customize-group">
+            <h3>Custom feeds</h3>
+            <ul id="custom-feed-list" class="feed-toggle-list"></ul>
+          </div>
         </div>
-        {% endfor %}
+      </section>
 
+      <section id="feed-grid" class="feed-grid" aria-live="polite"></section>
     </main>
 
-    <footer class="bottombanner">
-      <a href="https://github.com/semiformal-net/rssboxes" target="_blank">
-       <button type="button" class="btn"><i class="fa fa-github fa-lg" aria-hidden="true"></i></button>
-      </a> Semiformal
+    <footer class="footer">
+      <a href="https://github.com/semiformal-net/rssboxes" target="_blank" rel="noopener noreferrer">semiformal / github</a>
     </footer>
 
-
-
 <script>
-// Function to make an asynchronous AJAX request
-function makeAsyncRequest(url, callback) {
-  const xhr = new XMLHttpRequest();
-  xhr.timeout = 30000; // timeout in ms
-  xhr.onreadystatechange = function() {
-    if (xhr.readyState == 4) {
-      if (xhr.status == 200) {
-        callback(null, JSON.parse(xhr.responseText));
-      } else {
-        callback("Error: " + xhr.status);
+(() => {
+  const STORAGE_KEY = "rssboxes.dashboard.v2";
+  const EMPTY_PREFS = { order: [], hiddenDefaultIds: [], customFeeds: [], updatedAt: new Date().toISOString() };
+
+  const state = {
+    defaults: [],
+    prefs: { ...EMPTY_PREFS },
+    cards: new Map(),
+    feedTitles: {},
+  };
+
+  const el = {
+    grid: document.getElementById("feed-grid"),
+    toggleCustomize: document.getElementById("toggle-customize"),
+    refreshVisible: document.getElementById("refresh-visible"),
+    restoreDefaults: document.getElementById("restore-defaults"),
+    customizePanel: document.getElementById("customize-panel"),
+    defaultFeedList: document.getElementById("default-feed-list"),
+    customFeedList: document.getElementById("custom-feed-list"),
+    addFeedForm: document.getElementById("add-feed-form"),
+    addFeedError: document.getElementById("add-feed-error"),
+    feedUrlInput: document.getElementById("feed-url-input"),
+    feedLabelInput: document.getElementById("feed-label-input"),
+  };
+
+  function loadPrefs() {
+    try {
+      const raw = localStorage.getItem(STORAGE_KEY);
+      if (!raw) return { ...EMPTY_PREFS };
+      const parsed = JSON.parse(raw);
+      return {
+        order: Array.isArray(parsed.order) ? parsed.order : [],
+        hiddenDefaultIds: Array.isArray(parsed.hiddenDefaultIds) ? parsed.hiddenDefaultIds : [],
+        customFeeds: Array.isArray(parsed.customFeeds) ? parsed.customFeeds : [],
+        updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString(),
+      };
+    } catch (_) {
+      return { ...EMPTY_PREFS };
+    }
+  }
+
+  function savePrefs() {
+    state.prefs.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.prefs));
+  }
+
+  function sourceLabel(feed) {
+    if (feed.type === "custom" && feed.label) return feed.label;
+    return feed.sourceUrl;
+  }
+
+  function listLabel(feed) {
+    if (feed.type === "custom" && feed.label) return feed.label;
+    if (feed.displayName) return feed.displayName;
+    if (state.feedTitles[feed.id]) return state.feedTitles[feed.id];
+    return feed.sourceUrl;
+  }
+
+  function feedIdFromIndex(index) {
+    return "default:" + index;
+  }
+
+  function parseHost(url) {
+    try {
+      return new URL(url).hostname;
+    } catch (_) {
+      return "";
+    }
+  }
+
+  function faviconUrl(url) {
+    const host = parseHost(url);
+    return host ? ("https://www.google.com/s2/favicons?sz=64&domain=" + encodeURIComponent(host)) : "";
+  }
+
+  async function apiGet(path) {
+    const res = await fetch(path, { credentials: "same-origin" });
+    if (!res.ok) throw new Error("HTTP " + res.status);
+    return res.json();
+  }
+
+  async function apiPost(path, payload) {
+    const res = await fetch(path, {
+      method: "POST",
+      credentials: "same-origin",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    const data = await res.json().catch(() => ({ success: false, error: "Bad server response" }));
+    if (!res.ok && !data.error) data.error = "HTTP " + res.status;
+    return { ok: res.ok, data };
+  }
+
+  function getAllFeeds() {
+    const defaults = state.defaults.map((feed) => ({ ...feed, type: "default" }));
+    const customs = state.prefs.customFeeds.map((feed) => ({ ...feed, type: "custom" }));
+    return [...defaults, ...customs];
+  }
+
+  function isHidden(feed) {
+    return feed.type === "default" && state.prefs.hiddenDefaultIds.includes(feed.id);
+  }
+
+  function visibleFeedsInOrder() {
+    const all = new Map();
+    getAllFeeds().forEach((feed) => all.set(feed.id, feed));
+
+    const order = [];
+    state.prefs.order.forEach((id) => {
+      if (all.has(id)) {
+        const feed = all.get(id);
+        if (!isHidden(feed)) order.push(feed);
+        all.delete(id);
+      }
+    });
+
+    Array.from(all.values()).forEach((feed) => {
+      if (!isHidden(feed)) order.push(feed);
+    });
+
+    return order;
+  }
+
+  function normalizeOrder() {
+    const validIds = new Set(getAllFeeds().map((feed) => feed.id));
+    const next = [];
+    state.prefs.order.forEach((id) => {
+      if (validIds.has(id) && !next.includes(id)) next.push(id);
+    });
+    Array.from(validIds).forEach((id) => {
+      if (!next.includes(id)) next.push(id);
+    });
+    state.prefs.order = next;
+  }
+
+  function createCardSkeleton(feed) {
+    const card = document.createElement("article");
+    card.className = "feed-card loading";
+    card.dataset.feedId = feed.id;
+    const head = document.createElement("div");
+    head.className = "feed-card-head";
+
+    const sourceChip = document.createElement("div");
+    sourceChip.className = "source-chip";
+    const faviconWrap = document.createElement("span");
+    faviconWrap.className = "favicon-wrap";
+    const favicon = document.createElement("img");
+    favicon.src = faviconUrl(feed.sourceUrl);
+    favicon.alt = "";
+    favicon.loading = "lazy";
+    favicon.addEventListener("error", () => {
+      favicon.style.display = "none";
+    });
+    faviconWrap.appendChild(favicon);
+    const sourceText = document.createElement("span");
+    sourceText.className = "source-text";
+    sourceText.textContent = sourceLabel(feed);
+    sourceChip.appendChild(faviconWrap);
+    sourceChip.appendChild(sourceText);
+
+    const cardActions = document.createElement("div");
+    cardActions.className = "card-actions";
+    const actions = [
+      ["move-up", "Move feed up", "↑"],
+      ["move-down", "Move feed down", "↓"],
+      ["refresh", "Refresh feed", "↻"],
+    ];
+    actions.forEach(([action, label, symbol]) => {
+      const btn = document.createElement("button");
+      btn.className = "icon-btn";
+      btn.dataset.action = action;
+      btn.setAttribute("aria-label", label);
+      btn.title = label;
+      btn.textContent = symbol;
+      cardActions.appendChild(btn);
+    });
+    head.appendChild(sourceChip);
+    head.appendChild(cardActions);
+
+    const title = document.createElement("h3");
+    title.className = "feed-title";
+    title.textContent = "Loading...";
+
+    const list = document.createElement("ul");
+    list.className = "item-list skeleton-list";
+    for (let i = 0; i < 5; i++) {
+      list.appendChild(document.createElement("li"));
+    }
+
+    card.appendChild(head);
+    card.appendChild(title);
+    card.appendChild(list);
+    return card;
+  }
+
+  function renderCardContent(card, payload, feed) {
+    if (!payload.success) {
+      card.classList.remove("loading");
+      card.querySelector(".feed-title").textContent = "Unable to load feed";
+      const listEl = card.querySelector(".item-list");
+      listEl.innerHTML = "";
+      const errorLi = document.createElement("li");
+      errorLi.className = "error-row";
+      errorLi.textContent = payload.error || "Unknown error";
+      listEl.appendChild(errorLi);
+      return;
+    }
+
+    const titleEl = card.querySelector(".feed-title");
+    const listEl = card.querySelector(".item-list");
+
+    titleEl.textContent = payload.title || "Untitled Feed";
+    if (payload.title) {
+      const old = state.feedTitles[feed.id];
+      state.feedTitles[feed.id] = payload.title;
+      if (old !== payload.title && !el.customizePanel.classList.contains("hidden")) {
+        renderFeedLists();
       }
     }
-  };
-  xhr.open("GET", url, true);
-  xhr.send();
-}
+    listEl.classList.remove("skeleton-list");
+    listEl.innerHTML = "";
 
-// Function to display the parsed feed items
-function displayRssFeed(feedItems, containerId) {
-  var rssFeedContainer = document.getElementById(containerId);
+    payload.feed_items.forEach((item) => {
+      const li = document.createElement("li");
+      li.className = "item-row";
+      const link = document.createElement("a");
+      link.href = item.url || "#";
+      link.target = "_blank";
+      link.rel = "noopener noreferrer";
+      link.textContent = item.title || "Untitled";
 
-  // Display the first 5 items
-  var content = "<ul>";
-  for (var i = 0; i < feedItems.length; i++) {
-    var title = feedItems[i].title;
-    var summary = feedItems[i].summary;
-    var url = feedItems[i].url;
+      const summary = document.createElement("p");
+      summary.textContent = item.summary || "";
 
-    //content += "<div><h3>" + title + "</h3><p>" + summary + "</p><a href='" + url + "' target='_blank'>Read more</a></div>";
-    content += "<li> <a href='" + url + "' target='_blank'>" + title + "</a><div class=subtext>" + summary + "</div></li>"
+      li.appendChild(link);
+      li.appendChild(summary);
+      listEl.appendChild(li);
+    });
+    card.classList.remove("loading");
   }
-  content += "</ul>"
-  rssFeedContainer.innerHTML = content;
-}
 
-// Function to display the parsed feed items
-function titledisplayRssFeed(title, containerId) {
-  var rssFeedContainer = document.getElementById(containerId);
-  // set title
-  var content = title;
-  rssFeedContainer.innerHTML = content;
-}
-// Function to handle the refresh button click
-function refreshFeed(feedNumber) {
-  var feedContainerId = "feed-" + feedNumber + "-content";
-  var titleContainerId = "title-" + feedNumber + "-content";
+  async function fetchFeedFor(feed, card) {
+    const feedRef = feed.type === "default"
+      ? { type: "default", index: feed.index }
+      : { type: "url", url: feed.sourceUrl };
 
-  // Display loading message
-  document.getElementById(feedContainerId).innerHTML = "Loading...";
+    const response = await apiPost("/api/v1/feeds/fetch", { feedRef });
+    renderCardContent(card, response.data || { success: false, error: "No response" }, feed);
+  }
 
-  // Make the asynchronous AJAX request to the Flask proxy
-  makeAsyncRequest("/fetch_feed/" + feedNumber, function(error, response) {
-    console.log("feed",feedNumber);
-    console.log("Error:", error);
-    console.log("Response:", response);
+  async function renderGridAndFetch() {
+    state.cards.clear();
+    el.grid.innerHTML = "";
+    const feeds = visibleFeedsInOrder();
 
-    if (!response) {
-      document.getElementById(feedContainerId).innerHTML = "No response";
+    feeds.forEach((feed) => {
+      const card = createCardSkeleton(feed);
+      state.cards.set(feed.id, { feed, card });
+      el.grid.appendChild(card);
+    });
+
+    for (const feed of feeds) {
+      const info = state.cards.get(feed.id);
+      if (info) fetchFeedFor(feed, info.card);
+    }
+  }
+
+  function moveFeed(feedId, delta) {
+    normalizeOrder();
+    const idx = state.prefs.order.indexOf(feedId);
+    if (idx === -1) return;
+    const target = idx + delta;
+    if (target < 0 || target >= state.prefs.order.length) return;
+    const clone = state.prefs.order.slice();
+    const [item] = clone.splice(idx, 1);
+    clone.splice(target, 0, item);
+    state.prefs.order = clone;
+    savePrefs();
+    renderGridAndFetch();
+  }
+
+  function toggleDefaultHidden(feedId, hidden) {
+    const set = new Set(state.prefs.hiddenDefaultIds);
+    if (hidden) set.add(feedId);
+    else set.delete(feedId);
+    state.prefs.hiddenDefaultIds = Array.from(set);
+    savePrefs();
+    normalizeOrder();
+    renderFeedLists();
+    renderGridAndFetch();
+  }
+
+  function removeCustomFeed(feedId) {
+    state.prefs.customFeeds = state.prefs.customFeeds.filter((f) => f.id !== feedId);
+    state.prefs.order = state.prefs.order.filter((id) => id !== feedId);
+    savePrefs();
+    normalizeOrder();
+    renderFeedLists();
+    renderGridAndFetch();
+  }
+
+  async function addCustomFeed(url, label) {
+    const trimmed = url.trim();
+    const test = await apiPost("/api/v1/feeds/fetch", { feedRef: { type: "url", url: trimmed } });
+    if (!test.data || !test.data.success) {
+      throw new Error(test.data?.error || "Could not validate feed");
     }
 
-    if (!error && response.success) {
-      displayRssFeed(response.feed_items, feedContainerId);
-      titledisplayRssFeed(response.title, titleContainerId);
-    } else {
-      document.getElementById(feedContainerId).innerHTML = "Error loading feed: " + response.error;
-    }
-  });
-}
-
-
-window.onload = function () {
-  const feedCount = {{ rss_feed_urls | length }};
-  for (let i = 1; i <= feedCount; i++) {
-    refreshFeed(i);
+    const feedId = "custom:" + crypto.randomUUID();
+    state.prefs.customFeeds.push({
+      id: feedId,
+      url: trimmed,
+      sourceUrl: trimmed,
+      label: label.trim() || null,
+    });
+    state.prefs.order.push(feedId);
+    savePrefs();
+    normalizeOrder();
+    renderFeedLists();
+    renderGridAndFetch();
   }
-};
+
+  function renderFeedLists() {
+    el.defaultFeedList.innerHTML = "";
+    el.customFeedList.innerHTML = "";
+
+    state.defaults.forEach((feed) => {
+      const li = document.createElement("li");
+      const hidden = state.prefs.hiddenDefaultIds.includes(feed.id);
+      const label = document.createElement("label");
+      const checkbox = document.createElement("input");
+      checkbox.type = "checkbox";
+      checkbox.checked = !hidden;
+      checkbox.dataset.feedId = feed.id;
+      const span = document.createElement("span");
+      span.textContent = listLabel(feed);
+      label.appendChild(checkbox);
+      label.appendChild(span);
+      li.appendChild(label);
+      checkbox.addEventListener("change", () => toggleDefaultHidden(feed.id, !checkbox.checked));
+      el.defaultFeedList.appendChild(li);
+    });
+
+    if (!state.prefs.customFeeds.length) {
+      const empty = document.createElement("li");
+      empty.className = "muted";
+      empty.textContent = "No custom feeds yet.";
+      el.customFeedList.appendChild(empty);
+      return;
+    }
+
+    state.prefs.customFeeds.forEach((feed) => {
+      const li = document.createElement("li");
+      const row = document.createElement("div");
+      row.className = "custom-feed-row";
+      const text = document.createElement("span");
+      text.textContent = listLabel({ ...feed, type: "custom", sourceUrl: feed.sourceUrl || feed.url });
+      const removeBtn = document.createElement("button");
+      removeBtn.className = "btn btn-small btn-danger";
+      removeBtn.type = "button";
+      removeBtn.textContent = "Remove";
+      removeBtn.addEventListener("click", () => removeCustomFeed(feed.id));
+      row.appendChild(text);
+      row.appendChild(removeBtn);
+      li.appendChild(row);
+      el.customFeedList.appendChild(li);
+    });
+  }
+
+  function restoreDefaults() {
+    state.prefs = { ...EMPTY_PREFS };
+    savePrefs();
+    normalizeOrder();
+    renderFeedLists();
+    renderGridAndFetch();
+  }
+
+  function bindEvents() {
+    el.toggleCustomize.addEventListener("click", () => {
+      const willOpen = el.customizePanel.classList.contains("hidden");
+      el.customizePanel.classList.toggle("hidden");
+      if (willOpen) {
+        renderFeedLists();
+      }
+    });
+
+    el.refreshVisible.addEventListener("click", () => {
+      renderGridAndFetch();
+    });
+
+    el.restoreDefaults.addEventListener("click", restoreDefaults);
+
+    el.addFeedForm.addEventListener("submit", async (event) => {
+      event.preventDefault();
+      el.addFeedError.textContent = "";
+      el.addFeedError.classList.add("hidden");
+      try {
+        await addCustomFeed(el.feedUrlInput.value, el.feedLabelInput.value);
+        el.addFeedForm.reset();
+      } catch (error) {
+        el.addFeedError.textContent = error.message || "Could not add feed";
+        el.addFeedError.classList.remove("hidden");
+      }
+    });
+
+    el.grid.addEventListener("click", (event) => {
+      const button = event.target.closest("button[data-action]");
+      if (!button) return;
+      const card = event.target.closest(".feed-card");
+      if (!card) return;
+      const feedId = card.dataset.feedId;
+      const info = state.cards.get(feedId);
+      if (!info) return;
+
+      const action = button.dataset.action;
+      if (action === "move-up") moveFeed(feedId, -1);
+      if (action === "move-down") moveFeed(feedId, 1);
+      if (action === "refresh") {
+        card.classList.add("loading");
+        fetchFeedFor(info.feed, card);
+      }
+    });
+  }
+
+  async function init() {
+    state.prefs = loadPrefs();
+    try {
+      const defaults = await apiGet("/api/v1/feeds/default");
+      state.defaults = defaults.map((feed) => ({
+        ...feed,
+        id: feed.id || feedIdFromIndex(feed.index),
+        sourceUrl: feed.sourceUrl,
+      }));
+    } catch (_) {
+      state.defaults = [];
+    }
+    normalizeOrder();
+    renderFeedLists();
+    bindEvents();
+    renderGridAndFetch();
+  }
+
+  init();
+})();
 </script>
-
   </body>
 </html>
