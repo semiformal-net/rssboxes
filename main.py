@@ -7,6 +7,7 @@ from html.parser import HTMLParser
 from flask import Flask, render_template, jsonify, send_from_directory
 import feedparser
 import requests
+from blingfire import text_to_sentences
 
 # service-to-service auth
 import google.auth.transport.requests
@@ -30,6 +31,25 @@ def html_to_text(s: str) -> str:
     parser.feed(s)
     return html.unescape(parser.get_text()).strip()
 
+def first_sentence(text: str) -> str:
+    if not text:
+        return ""
+
+    try:
+        # blingfire returns newline-separated sentences
+        sentences = text_to_sentences(text).split("\n")
+
+        for s in sentences:
+            s = s.strip()
+            if s:
+                return truncate(s)
+
+        # if blingfire returns only empty lines, fall back
+        return text
+
+    except Exception:
+        # any failure → safe fallback
+        return text
 
 def clean_summary(summary: str, max_length: int = 200) -> str:
     """
@@ -45,26 +65,10 @@ def clean_summary(summary: str, max_length: int = 200) -> str:
     # Remove HTML tags and unescape entities
     text = html_to_text(summary)
 
-    # Mask common abbreviations so sentence splitting doesn't treat them as boundaries.
-    abbrev_token = "<DOT>"
-    abbreviations = (
-        "Mr.", "Mrs.", "Ms.", "Dr.", "Prof.", "Sr.", "Jr.",
-        "St.", "vs.", "etc.", "e.g.", "i.e.", "U.S.", "U.K.",
-    )
-    for abbr in abbreviations:
-        pattern = re.compile(re.escape(abbr), re.IGNORECASE)
-        text = pattern.sub(lambda m: m.group(0).replace(".", abbrev_token), text)
-
-    # Use regex to split into sentences or lines
-    parts = re.split(r'(?<=[.!?])\s+|\n', text)
-
-    for part in parts:
-        clean_part = part.replace(abbrev_token, ".").strip()
-        if clean_part:
-            return truncate_at_word_boundary(clean_part, max_length)
+    first = first_sentence(text)
 
     # Fallback if no clean sentence found
-    return truncate_at_word_boundary(text.replace(abbrev_token, "."), max_length)
+    return truncate_at_word_boundary(first, max_length)
 
 def truncate_at_word_boundary(text: str, max_length: int) -> str:
     """
