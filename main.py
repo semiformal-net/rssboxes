@@ -42,7 +42,7 @@ def first_sentence(text: str) -> str:
         for s in sentences:
             s = s.strip()
             if s:
-                return truncate(s)
+                return s
 
         # if blingfire returns only empty lines, fall back
         return text
