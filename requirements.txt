@@ -2,3 +2,5 @@ Flask
 feedparser
 requests
 google-auth
+blingfire
+numpy
