@@ -19,9 +19,12 @@
 
     <main class="page">
       <section class="toolbar" aria-label="Dashboard controls">
-        <button id="toggle-customize" class="btn btn-primary" type="button">Customize</button>
-        <button id="refresh-visible" class="btn" type="button">Refresh Visible</button>
-        <button id="restore-defaults" class="btn btn-danger" type="button">Restore Defaults</button>
+        <div class="toolbar-group" role="group" aria-label="Primary dashboard actions">
+          <button id="toggle-customize" class="btn btn-primary" type="button">Customize</button>
+          <button id="refresh-visible" class="btn" type="button">Refresh Visible</button>
+          <button id="restore-defaults" class="btn btn-danger btn-soft-danger" type="button">Restore Defaults</button>
+        </div>
+        <p id="last-updated" class="last-updated" aria-live="polite">Last updated: never</p>
       </section>
 
       <section id="customize-panel" class="customize-panel hidden" aria-label="Customize feed dashboard">
@@ -57,6 +60,8 @@
 <script>
 (() => {
   const STORAGE_KEY = "rssboxes.dashboard.v2";
+  const FEED_CACHE_KEY = "rssboxes.feedcache.v1";
+  const FEED_CACHE_TTL_MS = 10 * 60 * 1000;
   const EMPTY_PREFS = { order: [], hiddenDefaultIds: [], customFeeds: [], updatedAt: new Date().toISOString() };
 
   const state = {
@@ -64,6 +69,8 @@
     prefs: { ...EMPTY_PREFS },
     cards: new Map(),
     feedTitles: {},
+    refreshRun: 0,
+    feedCache: {},
   };
 
   const el = {
@@ -71,6 +78,7 @@
     toggleCustomize: document.getElementById("toggle-customize"),
     refreshVisible: document.getElementById("refresh-visible"),
     restoreDefaults: document.getElementById("restore-defaults"),
+    lastUpdated: document.getElementById("last-updated"),
     customizePanel: document.getElementById("customize-panel"),
     defaultFeedList: document.getElementById("default-feed-list"),
     customFeedList: document.getElementById("custom-feed-list"),
@@ -101,9 +109,64 @@
     localStorage.setItem(STORAGE_KEY, JSON.stringify(state.prefs));
   }
 
+  function loadFeedCache() {
+    try {
+      const raw = localStorage.getItem(FEED_CACHE_KEY);
+      if (!raw) return {};
+      const parsed = JSON.parse(raw);
+      return parsed && typeof parsed === "object" ? parsed : {};
+    } catch (_) {
+      return {};
+    }
+  }
+
+  function saveFeedCache() {
+    localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(state.feedCache));
+  }
+
+  function feedCacheKey(feed) {
+    if (feed.type === "default") return "default:" + feed.index;
+    return "custom:" + (feed.id || feed.sourceUrl);
+  }
+
+  function getCachedPayload(feed) {
+    const entry = state.feedCache[feedCacheKey(feed)];
+    if (!entry) return null;
+    if (!entry.cachedAt || !entry.payload) return null;
+    if ((Date.now() - entry.cachedAt) > FEED_CACHE_TTL_MS) return null;
+    return entry.payload;
+  }
+
+  function setCachedPayload(feed, payload) {
+    if (!payload || !payload.success) return;
+    state.feedCache[feedCacheKey(feed)] = {
+      cachedAt: Date.now(),
+      payload,
+    };
+    saveFeedCache();
+  }
+
+  function clearCachedPayload(feed) {
+    delete state.feedCache[feedCacheKey(feed)];
+    saveFeedCache();
+  }
+
+  function pruneFeedCache() {
+    const valid = new Set(getAllFeeds().map((feed) => feedCacheKey(feed)));
+    for (const key of Object.keys(state.feedCache)) {
+      const entry = state.feedCache[key];
+      const stale = !entry || !entry.cachedAt || (Date.now() - entry.cachedAt) > FEED_CACHE_TTL_MS;
+      if (!valid.has(key) || stale) {
+        delete state.feedCache[key];
+      }
+    }
+    saveFeedCache();
+  }
+
   function sourceLabel(feed) {
     if (feed.type === "custom" && feed.label) return feed.label;
-    return feed.sourceUrl;
+    const host = parseHost(feed.sourceUrl);
+    return host || feed.sourceUrl;
   }
 
   function listLabel(feed) {
@@ -193,6 +256,7 @@
   function createCardSkeleton(feed) {
     const card = document.createElement("article");
     card.className = "feed-card loading";
+    card.classList.add(cardAccentClass(feed.id));
     card.dataset.feedId = feed.id;
     const head = document.createElement("div");
     head.className = "feed-card-head";
@@ -209,11 +273,12 @@
       favicon.style.display = "none";
     });
     faviconWrap.appendChild(favicon);
-    const sourceText = document.createElement("span");
-    sourceText.className = "source-text";
-    sourceText.textContent = sourceLabel(feed);
+    const title = document.createElement("h3");
+    title.className = "feed-title";
+    title.textContent = "Loading...";
+    title.title = sourceLabel(feed);
     sourceChip.appendChild(faviconWrap);
-    sourceChip.appendChild(sourceText);
+    sourceChip.appendChild(title);
 
     const cardActions = document.createElement("div");
     cardActions.className = "card-actions";
@@ -234,10 +299,6 @@
     head.appendChild(sourceChip);
     head.appendChild(cardActions);
 
-    const title = document.createElement("h3");
-    title.className = "feed-title";
-    title.textContent = "Loading...";
-
     const list = document.createElement("ul");
     list.className = "item-list skeleton-list";
     for (let i = 0; i < 5; i++) {
@@ -245,7 +306,6 @@
     }
 
     card.appendChild(head);
-    card.appendChild(title);
     card.appendChild(list);
     return card;
   }
@@ -267,6 +327,7 @@
     const listEl = card.querySelector(".item-list");
 
     titleEl.textContent = payload.title || "Untitled Feed";
+    titleEl.title = sourceLabel(feed);
     if (payload.title) {
       const old = state.feedTitles[feed.id];
       state.feedTitles[feed.id] = payload.title;
@@ -296,16 +357,47 @@
     card.classList.remove("loading");
   }
 
-  async function fetchFeedFor(feed, card) {
+  async function fetchFeedFor(feed, card, options = {}) {
+    const force = Boolean(options.force);
+    if (!force) {
+      const cached = getCachedPayload(feed);
+      if (cached) {
+        renderCardContent(card, cached, feed);
+        return { fromCache: true };
+      }
+    }
+
     const feedRef = feed.type === "default"
       ? { type: "default", index: feed.index }
       : { type: "url", url: feed.sourceUrl };
 
     const response = await apiPost("/api/v1/feeds/fetch", { feedRef });
-    renderCardContent(card, response.data || { success: false, error: "No response" }, feed);
+    const payload = response.data || { success: false, error: "No response" };
+    renderCardContent(card, payload, feed);
+    if (payload.success) {
+      setCachedPayload(feed, payload);
+    }
+    return { fromCache: false };
   }
 
-  async function renderGridAndFetch() {
+  function cardAccentClass(feedId) {
+    let hash = 0;
+    for (let i = 0; i < feedId.length; i++) {
+      hash = ((hash << 5) - hash) + feedId.charCodeAt(i);
+      hash |= 0;
+    }
+    const variants = ["accent-a", "accent-b", "accent-c", "accent-d"];
+    return variants[Math.abs(hash) % variants.length];
+  }
+
+  function formatTime(date) {
+    return date.toLocaleTimeString([], { hour: "numeric", minute: "2-digit", second: "2-digit" });
+  }
+
+  async function renderGridAndFetch(options = {}) {
+    const forceRefresh = Boolean(options.forceRefresh);
+    const runId = ++state.refreshRun;
+    el.lastUpdated.textContent = "Last updated: updating...";
     state.cards.clear();
     el.grid.innerHTML = "";
     const feeds = visibleFeedsInOrder();
@@ -316,9 +408,18 @@
       el.grid.appendChild(card);
     });
 
-    for (const feed of feeds) {
+    await Promise.all(feeds.map(async (feed) => {
       const info = state.cards.get(feed.id);
-      if (info) fetchFeedFor(feed, info.card);
+      if (!info) return;
+      try {
+        await fetchFeedFor(feed, info.card, { force: forceRefresh });
+      } catch (_) {
+        renderCardContent(info.card, { success: false, error: "Network error" }, feed);
+      }
+    }));
+
+    if (runId === state.refreshRun) {
+      el.lastUpdated.textContent = "Last updated: " + formatTime(new Date());
     }
   }
 
@@ -333,7 +434,7 @@
     clone.splice(target, 0, item);
     state.prefs.order = clone;
     savePrefs();
-    renderGridAndFetch();
+    renderGridAndFetch({ forceRefresh: false });
   }
 
   function toggleDefaultHidden(feedId, hidden) {
@@ -344,16 +445,18 @@
     savePrefs();
     normalizeOrder();
     renderFeedLists();
-    renderGridAndFetch();
+    renderGridAndFetch({ forceRefresh: false });
   }
 
   function removeCustomFeed(feedId) {
     state.prefs.customFeeds = state.prefs.customFeeds.filter((f) => f.id !== feedId);
     state.prefs.order = state.prefs.order.filter((id) => id !== feedId);
     savePrefs();
+    clearCachedPayload({ type: "custom", id: feedId });
+    pruneFeedCache();
     normalizeOrder();
     renderFeedLists();
-    renderGridAndFetch();
+    renderGridAndFetch({ forceRefresh: false });
   }
 
   async function addCustomFeed(url, label) {
@@ -372,9 +475,10 @@
     });
     state.prefs.order.push(feedId);
     savePrefs();
+    pruneFeedCache();
     normalizeOrder();
     renderFeedLists();
-    renderGridAndFetch();
+    renderGridAndFetch({ forceRefresh: false });
   }
 
   function renderFeedLists() {
@@ -427,9 +531,11 @@
   function restoreDefaults() {
     state.prefs = { ...EMPTY_PREFS };
     savePrefs();
+    state.feedCache = {};
+    saveFeedCache();
     normalizeOrder();
     renderFeedLists();
-    renderGridAndFetch();
+    renderGridAndFetch({ forceRefresh: true });
   }
 
   function bindEvents() {
@@ -442,7 +548,7 @@
     });
 
     el.refreshVisible.addEventListener("click", () => {
-      renderGridAndFetch();
+      renderGridAndFetch({ forceRefresh: true });
     });
 
     el.restoreDefaults.addEventListener("click", restoreDefaults);
@@ -474,13 +580,14 @@
       if (action === "move-down") moveFeed(feedId, 1);
       if (action === "refresh") {
         card.classList.add("loading");
-        fetchFeedFor(info.feed, card);
+        fetchFeedFor(info.feed, card, { force: true });
       }
     });
   }
 
   async function init() {
     state.prefs = loadPrefs();
+    state.feedCache = loadFeedCache();
     try {
       const defaults = await apiGet("/api/v1/feeds/default");
       state.defaults = defaults.map((feed) => ({
@@ -491,10 +598,11 @@
     } catch (_) {
       state.defaults = [];
     }
+    pruneFeedCache();
     normalizeOrder();
     renderFeedLists();
     bindEvents();
-    renderGridAndFetch();
+    renderGridAndFetch({ forceRefresh: false });
   }
 
   init();
