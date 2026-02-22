@@ -3,7 +3,7 @@ import os
 import html
 import socket
 import ipaddress
-from urllib.parse import urlparse
+from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from html.parser import HTMLParser
 
 from flask import Flask, render_template, jsonify, send_from_directory, request
@@ -30,6 +30,12 @@ MAX_FEED_BYTES = 3 * 1024 * 1024  # 3MB response cap
 ALLOWED_FEED_PORTS = {80, 443}
 HTTP_SESSION = requests.Session()
 HTTP_SESSION.headers.update(REQUEST_HEADERS)
+TRACKING_PARAM_KEYS = {
+    "fbclid", "gclid", "dclid", "gbraid", "wbraid", "mc_cid", "mc_eid",
+    "igshid", "yclid", "ref", "ref_src", "ref_url", "source", "cmpid",
+    "si", "feature", "app", "mibextid", "ocid", "s_cid",
+}
+TRACKING_PARAM_PREFIXES = ("utm_", "at_", "vero_", "mkt_", "ga_", "pk_")
 
 class StrippingParser(HTMLParser):
     def __init__(self):
@@ -163,7 +169,21 @@ def sanitize_outbound_link(link: str) -> str:
     parsed = urlparse(link)
     if parsed.scheme not in ("http", "https"):
         return None
-    return link
+    cleaned_query = []
+    for key, value in parse_qsl(parsed.query, keep_blank_values=True):
+        key_l = key.lower()
+        if key_l in TRACKING_PARAM_KEYS:
+            continue
+        if key_l.startswith(TRACKING_PARAM_PREFIXES):
+            continue
+        cleaned_query.append((key, value))
+
+    # Drop fragment + tracker params, keep meaningful query keys.
+    cleaned = parsed._replace(
+        query=urlencode(cleaned_query, doseq=True),
+        fragment="",
+    )
+    return urlunparse(cleaned)
 
 def read_limited_response_text(response, max_bytes: int):
     chunks = []
@@ -253,7 +273,6 @@ def fetch_feed_payload(rss_feed_url: str, strict_ssrf: bool = False):
         return {'success': False, 'error': 'Feed response too large', 'errorType': 'validation'}
 
     return parse_feed_items(xml_text)
-
 
 # Route to render the main page
 @app.route('/')

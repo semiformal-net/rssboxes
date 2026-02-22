@@ -98,6 +98,39 @@ body {
   text-align: right;
 }
 
+.stonks-widget {
+  border: 1px solid var(--line);
+  background: rgba(249, 252, 255, 0.92);
+  border-radius: var(--radius);
+  box-shadow: var(--shadow);
+  padding: 0.45rem 0.55rem 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.tv-widget-wrap {
+  border: 1px solid #d3deea;
+  border-radius: 10px;
+  overflow: hidden;
+  background: #ffffff;
+  padding: 0;
+}
+
+tv-market-summary {
+  display: block;
+  width: 100%;
+  line-height: 0;
+}
+
+.stonks-fallback {
+  margin: 0;
+  padding: 0.55rem 0.65rem;
+  border-top: 1px solid #d3deea;
+  background: #f7fbff;
+  color: #375168;
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+
 .btn {
   border: 1px solid var(--line);
   background: #f7faff;
@@ -481,6 +514,7 @@ body {
   .last-updated {
     text-align: left;
   }
+
 }
 
 @media (max-width: 1250px) {

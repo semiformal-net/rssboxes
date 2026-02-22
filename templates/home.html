@@ -27,6 +27,20 @@
         <p id="last-updated" class="last-updated" aria-live="polite">Last updated: never</p>
       </section>
 
+      <section class="stonks-widget" aria-label="Market snapshot">
+        <div class="tv-widget-wrap">
+          <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-market-summary.js"></script>
+          <tv-market-summary
+            symbol-sectors='[{"sectionName":"Markets","symbols":["COINBASE:BTCUSD","FRED:VIXCLS","AMEX:SPY","AMEX:GLD"]}]'
+            item-size="compact"
+            mode="custom">
+          </tv-market-summary>
+          <p id="stonks-fallback" class="stonks-fallback hidden">
+            Market widget unavailable. If you use a strict content blocker, allow `widgets.tradingview-widget.com`.
+          </p>
+        </div>
+      </section>
+
       <section id="customize-panel" class="customize-panel hidden" aria-label="Customize feed dashboard">
         <h2>Customize Dashboard</h2>
         <form id="add-feed-form" class="add-feed-form">
@@ -86,6 +100,7 @@
     addFeedError: document.getElementById("add-feed-error"),
     feedUrlInput: document.getElementById("feed-url-input"),
     feedLabelInput: document.getElementById("feed-label-input"),
+    stonksFallback: document.getElementById("stonks-fallback"),
   };
 
   function loadPrefs() {
@@ -603,6 +618,11 @@
     renderFeedLists();
     bindEvents();
     renderGridAndFetch({ forceRefresh: false });
+    setTimeout(() => {
+      if (!customElements.get("tv-market-summary") && el.stonksFallback) {
+        el.stonksFallback.classList.remove("hidden");
+      }
+    }, 3500);
   }
 
   init();
