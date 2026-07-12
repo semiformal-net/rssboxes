@@ -1,6 +1,9 @@
-Flask
-feedparser
-requests
-google-auth
-blingfire
-numpy
+Flask==3.1.1
+feedparser==6.0.11
+requests==2.32.3
+google-auth==2.40.1
+blingfire==0.1.8
+# blingfire imports numpy at module level but does not declare it as a dependency
+numpy==2.2.6
+# required because app.yaml specifies a custom gunicorn entrypoint
+gunicorn==26.0.0
