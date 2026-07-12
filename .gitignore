@@ -140,3 +140,7 @@ env/
 
 # pycruft
 __pycache__/
+
+# local design artifacts
+*.png
+PLAN.md

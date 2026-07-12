@@ -13,11 +13,11 @@ RSS_FEEDS = [
 'https://feeds.content.dowjones.io/public/rss/WSJcomUSBusiness',
 'https://forums.redflagdeals.com/feed/forum/9',
 'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/redrss',
-'http://www.pipes.digital/feed/pO7rdLN5',
+'https://newsletter.rodeo/feeds/financefeeds.atom',
 'https://kagi.com/smallweb/appreciated',
 'https://variety.com/v/tv/reviews/feed/',
 'https://daily.jstor.org/feed',
 'https://cecily-feed.nfshost.com/cecily.xml',
 'https://www.science.org/blogs/pipeline/feed',
-'https://newsletter.rodeo/feeds/5mf9c2wp0hgxefru.xml'
+'https://newsletter.rodeo/feeds/polymarketoracle.atom'
 ]
