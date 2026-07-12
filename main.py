@@ -1,8 +1,6 @@
 import re
 import os
 import html
-import socket
-import ipaddress
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 from html.parser import HTMLParser
 
@@ -20,14 +18,15 @@ app.config.from_object('rss_config')
 rss_feed_urls = app.config['RSS_FEEDS']
 
 URL_REGEX = re.compile(r'^https?://[^\s/$.?#].[^\s]*$', re.IGNORECASE)
-METADATA_HOSTS = {"metadata.google.internal", "metadata", "169.254.169.254"}
 REQUEST_HEADERS = {
     'user-agent': 'Mozilla/5.0 (X11; Linux i686; rv:109.0) Gecko/20100101 Firefox/120.0',
     'accept': '*/*'
 }
 MAX_FEED_ITEMS = 5
 MAX_FEED_BYTES = 3 * 1024 * 1024  # 3MB response cap
-ALLOWED_FEED_PORTS = {80, 443}
+# connect within 5s; abort after 15s of read inactivity (slow-to-first-byte
+# feeds like the redrss cloud function need the generous read side)
+REQUEST_TIMEOUT = (5, 15)
 HTTP_SESSION = requests.Session()
 HTTP_SESSION.headers.update(REQUEST_HEADERS)
 TRACKING_PARAM_KEYS = {
@@ -117,18 +116,9 @@ def truncate_at_word_boundary(text: str, max_length: int) -> str:
         truncated = truncated[:-1]
     return truncated + "..."
 
-def is_blocked_ip(ip_str: str) -> bool:
-    ip = ipaddress.ip_address(ip_str)
-    return any([
-        ip.is_loopback,
-        ip.is_private,
-        ip.is_link_local,
-        ip.is_multicast,
-        ip.is_reserved,
-        ip.is_unspecified,
-    ])
-
-def validate_feed_url(rss_feed_url: str, strict_ssrf: bool = False):
+def validate_feed_url(rss_feed_url: str):
+    # Feed URLs come only from rss_config.py; this sanity check makes a
+    # config typo fail with a clear error rather than a confusing one.
     if not rss_feed_url or not URL_REGEX.match(rss_feed_url):
         return False, "Malformed URL"
 
@@ -136,27 +126,8 @@ def validate_feed_url(rss_feed_url: str, strict_ssrf: bool = False):
     if parsed.scheme not in ("http", "https"):
         return False, "Only http/https URLs are allowed"
 
-    hostname = (parsed.hostname or "").lower().strip()
-    if not hostname:
+    if not (parsed.hostname or "").strip():
         return False, "URL must include a hostname"
-
-    if parsed.port and parsed.port not in ALLOWED_FEED_PORTS:
-        return False, "Blocked port"
-
-    if hostname in METADATA_HOSTS:
-        return False, "Blocked host"
-
-    if hostname == "localhost" or hostname.endswith(".localhost"):
-        return False, "Blocked host"
-
-    if strict_ssrf:
-        try:
-            for info in socket.getaddrinfo(hostname, None):
-                ip_str = info[4][0]
-                if is_blocked_ip(ip_str):
-                    return False, "Blocked host"
-        except Exception:
-            return False, "Unable to resolve host"
 
     return True, None
 
@@ -185,7 +156,19 @@ def sanitize_outbound_link(link: str) -> str:
     )
     return urlunparse(cleaned)
 
-def read_limited_response_text(response, max_bytes: int):
+def extract_site_link(feed) -> str:
+    # The feed's own website URL (<link> at channel level); used by the
+    # frontend to look up the site's favicon by its real domain.
+    link = feed.get('link')
+    if not link:
+        return None
+    link = str(link).strip()
+    parsed = urlparse(link)
+    if parsed.scheme not in ("http", "https") or not parsed.hostname:
+        return None
+    return link
+
+def read_limited_response_bytes(response, max_bytes: int):
     chunks = []
     total = 0
     for chunk in response.iter_content(chunk_size=65536, decode_unicode=False):
@@ -196,16 +179,15 @@ def read_limited_response_text(response, max_bytes: int):
             return None
         chunks.append(chunk)
 
-    body = b"".join(chunks)
-    encoding = response.encoding or "utf-8"
-    return body.decode(encoding, errors="replace")
+    return b"".join(chunks)
 
-def parse_feed_items(xml_string: str):
-    if len(xml_string) < 100:
+def parse_feed_items(xml_bytes: bytes):
+    if len(xml_bytes) < 100:
         return {'success': False, 'error': 'Bad feed data (response too short)'}
 
     try:
-        feed_parsed = feedparser.parse(xml_string)
+        # feedparser does BOM/XML-declaration-aware encoding detection on bytes
+        feed_parsed = feedparser.parse(xml_bytes)
     except Exception:
         return {'success': False, 'error': 'unable to parse'}
 
@@ -221,58 +203,60 @@ def parse_feed_items(xml_string: str):
         feed_items.append({
             'title': html.unescape(title),
             'summary': summary,
-            'url': html.unescape(link),
+            'url': link,
         })
 
         if len(feed_items) == MAX_FEED_ITEMS:
             break
 
     feed_title = ""
+    site_link = None
     try:
         feed_title = html.unescape(feed_parsed['feed'].get('title', 'Untitled Feed'))
+        site_link = extract_site_link(feed_parsed['feed'])
     except Exception:
         feed_title = "Untitled Feed"
 
-    return {'success': True, 'title': feed_title, 'feed_items': feed_items}
+    return {'success': True, 'title': feed_title, 'siteLink': site_link, 'feed_items': feed_items}
 
-def fetch_feed_payload(rss_feed_url: str, strict_ssrf: bool = False):
-    valid, error = validate_feed_url(rss_feed_url, strict_ssrf=strict_ssrf)
+def fetch_feed_payload(rss_feed_url: str):
+    valid, error = validate_feed_url(rss_feed_url)
     if not valid:
         return {'success': False, 'error': error, 'errorType': 'validation'}
 
     headers = {}
 
-    # If the URL contains cloudfunctions.net then get an auth token.
-    if 'cloudfunctions.net' in rss_feed_url:
-        auth_req = google.auth.transport.requests.Request()
-        id_token = google.oauth2.id_token.fetch_id_token(auth_req, rss_feed_url)
-        headers["Authorization"] = f"Bearer {id_token}"
+    # Cloud-function feeds need a service-to-service identity token.
+    hostname = (urlparse(rss_feed_url).hostname or "").lower()
+    if hostname.endswith(".cloudfunctions.net"):
+        try:
+            auth_req = google.auth.transport.requests.Request()
+            id_token = google.oauth2.id_token.fetch_id_token(auth_req, rss_feed_url)
+            headers["Authorization"] = f"Bearer {id_token}"
+        except Exception:
+            # no credentials available (local dev, Docker) or metadata server failure
+            return {'success': False, 'error': 'Unable to authenticate to feed backend', 'errorType': 'upstream'}
 
     try:
         response = HTTP_SESSION.get(
             rss_feed_url,
             headers=headers,
-            timeout=20,
-            allow_redirects=not strict_ssrf,
+            timeout=REQUEST_TIMEOUT,
             stream=True,
         )
     except Exception:
         return {'success': False, 'error': 'Unable to fetch feed URL', 'errorType': 'upstream'}
 
-    if strict_ssrf and response.is_redirect:
-        response.close()
-        return {'success': False, 'error': 'Redirects are not allowed', 'errorType': 'validation'}
-
     if not response.ok:
         response.close()
         return {'success': False, 'error': f'Server returned: {response.status_code}', 'errorType': 'upstream'}
 
-    xml_text = read_limited_response_text(response, MAX_FEED_BYTES)
+    xml_bytes = read_limited_response_bytes(response, MAX_FEED_BYTES)
     response.close()
-    if xml_text is None:
+    if xml_bytes is None:
         return {'success': False, 'error': 'Feed response too large', 'errorType': 'validation'}
 
-    return parse_feed_items(xml_text)
+    return parse_feed_items(xml_bytes)
 
 # Route to render the main page
 @app.route('/')
@@ -302,40 +286,17 @@ def api_default_feeds():
 def api_fetch_feed():
     payload = request.get_json(silent=True) or {}
     feed_ref = payload.get('feedRef') or {}
-    ref_type = feed_ref.get('type')
 
-    if ref_type == 'default':
-        index = feed_ref.get('index')
-        if not isinstance(index, int) or index < 1 or index > len(rss_feed_urls):
-            return jsonify({'success': False, 'error': 'feed index out of range'}), 400
-        result = fetch_feed_payload(rss_feed_urls[index - 1], strict_ssrf=False)
-        status_code = 200 if result.get('success') else 502
-        return jsonify(result), status_code
+    if feed_ref.get('type') != 'default':
+        return jsonify({'success': False, 'error': 'Unsupported feedRef.type'}), 400
 
-    if ref_type == 'url':
-        rss_feed_url = feed_ref.get('url')
-        result = fetch_feed_payload(rss_feed_url, strict_ssrf=True)
-        if result.get('success'):
-            status_code = 200
-        elif result.get('errorType') == 'validation':
-            status_code = 400
-        else:
-            status_code = 502
-        return jsonify(result), status_code
+    index = feed_ref.get('index')
+    if not isinstance(index, int) or isinstance(index, bool) or index < 1 or index > len(rss_feed_urls):
+        return jsonify({'success': False, 'error': 'feed index out of range'}), 400
 
-    return jsonify({'success': False, 'error': 'Unsupported feedRef.type'}), 400
-
-# Route to fetch and return the RSS feed as JSON
-@app.route('/fetch_feed/<int:feed_number>')
-def fetch_feed(feed_number):
-    if feed_number < 1 or feed_number > len(rss_feed_urls):
-        return jsonify({'success': False, 'error': f'feed index out of range: {feed_number}'})
-    return jsonify(fetch_feed_payload(rss_feed_urls[feed_number - 1], strict_ssrf=False))
-
-@app.route('/static/<path:filename>')
-def serve_static(filename):
-    root_dir = os.path.dirname(os.getcwd())
-    return send_from_directory(os.path.join(root_dir, 'static'), filename)
+    result = fetch_feed_payload(rss_feed_urls[index - 1])
+    status_code = 200 if result.get('success') else 502
+    return jsonify(result), status_code
 
 @app.route('/favicon.ico')
 def serve_favicon():

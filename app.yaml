@@ -1,4 +1,8 @@
 runtime: python310
 instance_class: F1
+# Threaded gunicorn: the workload is I/O-bound (waiting on upstream feeds) and
+# the frontend fires ~20 parallel fetches per page load. Requires gunicorn in
+# requirements.txt (GAE only supplies gunicorn for the default entrypoint).
+entrypoint: gunicorn -b :$PORT --workers 1 --threads 16 --timeout 60 main:app
 automatic_scaling:
   max_instances: 2

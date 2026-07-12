@@ -178,11 +178,6 @@ tv-market-summary {
   background: var(--danger);
 }
 
-.btn-small {
-  padding: 0.3rem 0.55rem;
-  font-size: 0.8rem;
-}
-
 .customize-panel {
   border: 1px solid var(--line);
   background: rgba(248, 251, 255, 0.95);
@@ -197,60 +192,29 @@ tv-market-summary {
   display: none;
 }
 
-.customize-panel h2,
-.customize-panel h3 {
+.customize-panel h2 {
   font-family: "DM Serif Display", serif;
   margin: 0 0 0.65rem;
-}
-
-.add-feed-form {
-  display: grid;
-  grid-template-columns: 1fr;
-  gap: 0.45rem;
-}
-
-.add-feed-form input {
-  border: 1px solid var(--line);
-  border-radius: 8px;
-  padding: 0.5rem 0.65rem;
-  font-family: inherit;
-}
-
-.form-error {
-  margin: 0;
-  color: var(--danger);
-  font-weight: 700;
-}
-
-.customize-groups {
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
-  gap: 0.8rem;
-  margin-top: 1rem;
 }
 
 .feed-toggle-list {
   list-style: none;
   padding: 0;
   margin: 0;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+  gap: 0 1.2rem;
 }
 
 .feed-toggle-list li {
   border-top: 1px solid var(--line);
-  padding: 0.55rem 0;
+  padding: 0.45rem 0;
 }
 
 .feed-toggle-list label {
   display: grid;
   grid-template-columns: auto 1fr;
   gap: 0.55rem;
-}
-
-.custom-feed-row {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 0.7rem;
 }
 
 .muted {
@@ -289,7 +253,7 @@ tv-market-summary {
   top: 0;
   height: 4px;
   border-radius: var(--radius) var(--radius) 0 0;
-  background: linear-gradient(90deg, var(--card-accent), var(--card-accent-2), var(--accent-2), var(--accent-4));
+  background: linear-gradient(90deg, var(--card-accent), var(--card-accent-2));
 }
 
 .feed-card:hover {
@@ -364,6 +328,13 @@ tv-market-summary {
 .favicon-wrap img {
   width: 17px;
   height: 17px;
+}
+
+.favicon-letter {
+  font-size: 0.82rem;
+  font-weight: 800;
+  line-height: 1;
+  color: var(--card-accent);
 }
 
 .card-actions {

@@ -31,7 +31,7 @@
         <div class="tv-widget-wrap">
           <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-market-summary.js"></script>
           <tv-market-summary
-            symbol-sectors='[{"sectionName":"Markets","symbols":["AMEX:SPY","FRED:VIXCLS","AMEX:GLD","COINBASE:BTCUSD"]}]'
+            symbol-sectors='[{"sectionName":"Markets","symbols":["COINBASE:BTCUSD","FRED:VIXCLS","AMEX:SPY","AMEX:GLD"]}]'
             item-size="compact"
             mode="custom">
           </tv-market-summary>
@@ -43,25 +43,7 @@
 
       <section id="customize-panel" class="customize-panel hidden" aria-label="Customize feed dashboard">
         <h2>Customize Dashboard</h2>
-        <form id="add-feed-form" class="add-feed-form">
-          <label for="feed-url-input">Add custom RSS feed URL</label>
-          <input id="feed-url-input" type="url" placeholder="https://example.com/rss.xml" required>
-          <label for="feed-label-input">Optional label</label>
-          <input id="feed-label-input" type="text" maxlength="80" placeholder="My feed">
-          <button class="btn btn-primary" type="submit">Add Feed</button>
-          <p id="add-feed-error" class="form-error hidden"></p>
-        </form>
-
-        <div class="customize-groups">
-          <div class="customize-group">
-            <h3>Default feeds</h3>
-            <ul id="default-feed-list" class="feed-toggle-list"></ul>
-          </div>
-          <div class="customize-group">
-            <h3>Custom feeds</h3>
-            <ul id="custom-feed-list" class="feed-toggle-list"></ul>
-          </div>
-        </div>
+        <ul id="default-feed-list" class="feed-toggle-list"></ul>
       </section>
 
       <section id="feed-grid" class="feed-grid" aria-live="polite"></section>
@@ -73,14 +55,18 @@
 
 <script>
 (() => {
-  const STORAGE_KEY = "rssboxes.dashboard.v2";
+  const STORAGE_KEY = "rssboxes.dashboard.v3";
+  const LEGACY_STORAGE_KEY = "rssboxes.dashboard.v2";
   const FEED_CACHE_KEY = "rssboxes.feedcache.v1";
   const FEED_CACHE_TTL_MS = 10 * 60 * 1000;
-  const EMPTY_PREFS = { order: [], hiddenDefaultIds: [], customFeeds: [], updatedAt: new Date().toISOString() };
+
+  function emptyPrefs() {
+    return { order: [], hiddenDefaultIds: [], updatedAt: new Date().toISOString() };
+  }
 
   const state = {
     defaults: [],
-    prefs: { ...EMPTY_PREFS },
+    prefs: emptyPrefs(),
     cards: new Map(),
     feedTitles: {},
     refreshRun: 0,
@@ -95,33 +81,33 @@
     lastUpdated: document.getElementById("last-updated"),
     customizePanel: document.getElementById("customize-panel"),
     defaultFeedList: document.getElementById("default-feed-list"),
-    customFeedList: document.getElementById("custom-feed-list"),
-    addFeedForm: document.getElementById("add-feed-form"),
-    addFeedError: document.getElementById("add-feed-error"),
-    feedUrlInput: document.getElementById("feed-url-input"),
-    feedLabelInput: document.getElementById("feed-label-input"),
     stonksFallback: document.getElementById("stonks-fallback"),
   };
 
   function loadPrefs() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
-      if (!raw) return { ...EMPTY_PREFS };
+      // Fall back to the v2 key once so existing visitors keep their
+      // order/hidden prefs; v2 customFeeds are dropped by normalizeOrder.
+      const raw = localStorage.getItem(STORAGE_KEY) || localStorage.getItem(LEGACY_STORAGE_KEY);
+      if (!raw) return emptyPrefs();
       const parsed = JSON.parse(raw);
       return {
         order: Array.isArray(parsed.order) ? parsed.order : [],
         hiddenDefaultIds: Array.isArray(parsed.hiddenDefaultIds) ? parsed.hiddenDefaultIds : [],
-        customFeeds: Array.isArray(parsed.customFeeds) ? parsed.customFeeds : [],
         updatedAt: typeof parsed.updatedAt === "string" ? parsed.updatedAt : new Date().toISOString(),
       };
     } catch (_) {
-      return { ...EMPTY_PREFS };
+      return emptyPrefs();
     }
   }
 
   function savePrefs() {
     state.prefs.updatedAt = new Date().toISOString();
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state.prefs));
+    try {
+      localStorage.setItem(STORAGE_KEY, JSON.stringify(state.prefs));
+    } catch (_) {
+      // storage unavailable (private browsing, quota) — run without persistence
+    }
   }
 
   function loadFeedCache() {
@@ -136,12 +122,15 @@
   }
 
   function saveFeedCache() {
-    localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(state.feedCache));
+    try {
+      localStorage.setItem(FEED_CACHE_KEY, JSON.stringify(state.feedCache));
+    } catch (_) {
+      // storage unavailable — feeds simply refetch next load
+    }
   }
 
   function feedCacheKey(feed) {
-    if (feed.type === "default") return "default:" + feed.index;
-    return "custom:" + (feed.id || feed.sourceUrl);
+    return feed.id;
   }
 
   function getCachedPayload(feed) {
@@ -161,11 +150,6 @@
     saveFeedCache();
   }
 
-  function clearCachedPayload(feed) {
-    delete state.feedCache[feedCacheKey(feed)];
-    saveFeedCache();
-  }
-
   function pruneFeedCache() {
     const valid = new Set(getAllFeeds().map((feed) => feedCacheKey(feed)));
     for (const key of Object.keys(state.feedCache)) {
@@ -179,13 +163,11 @@
   }
 
   function sourceLabel(feed) {
-    if (feed.type === "custom" && feed.label) return feed.label;
     const host = parseHost(feed.sourceUrl);
     return host || feed.sourceUrl;
   }
 
   function listLabel(feed) {
-    if (feed.type === "custom" && feed.label) return feed.label;
     if (feed.displayName) return feed.displayName;
     if (state.feedTitles[feed.id]) return state.feedTitles[feed.id];
     return feed.sourceUrl;
@@ -203,8 +185,7 @@
     }
   }
 
-  function faviconUrl(url) {
-    const host = parseHost(url);
+  function faviconSrcForHost(host) {
     return host ? ("https://www.google.com/s2/favicons?sz=64&domain=" + encodeURIComponent(host)) : "";
   }
 
@@ -227,13 +208,11 @@
   }
 
   function getAllFeeds() {
-    const defaults = state.defaults.map((feed) => ({ ...feed, type: "default" }));
-    const customs = state.prefs.customFeeds.map((feed) => ({ ...feed, type: "custom" }));
-    return [...defaults, ...customs];
+    return state.defaults.map((feed) => ({ ...feed, type: "default" }));
   }
 
   function isHidden(feed) {
-    return feed.type === "default" && state.prefs.hiddenDefaultIds.includes(feed.id);
+    return state.prefs.hiddenDefaultIds.includes(feed.id);
   }
 
   function visibleFeedsInOrder() {
@@ -280,13 +259,23 @@
     sourceChip.className = "source-chip";
     const faviconWrap = document.createElement("span");
     faviconWrap.className = "favicon-wrap";
+    const monogram = document.createElement("span");
+    monogram.className = "favicon-letter";
+    monogram.textContent = (sourceLabel(feed).trim().charAt(0) || "?").toUpperCase();
     const favicon = document.createElement("img");
-    favicon.src = faviconUrl(feed.sourceUrl);
     favicon.alt = "";
     favicon.loading = "lazy";
+    favicon.style.display = "none";
+    favicon.addEventListener("load", () => {
+      favicon.style.display = "";
+      monogram.style.display = "none";
+    });
     favicon.addEventListener("error", () => {
       favicon.style.display = "none";
+      monogram.style.display = "";
     });
+    favicon.src = faviconSrcForHost(parseHost(feed.sourceUrl));
+    faviconWrap.appendChild(monogram);
     faviconWrap.appendChild(favicon);
     const title = document.createElement("h3");
     title.className = "feed-title";
@@ -325,6 +314,22 @@
     return card;
   }
 
+  function updateCardIcon(card, payload, feed) {
+    const monogram = card.querySelector(".favicon-letter");
+    if (monogram && payload.title) {
+      monogram.textContent = (payload.title.trim().charAt(0) || monogram.textContent).toUpperCase();
+    }
+    // The feed host (feeds.bbci.co.uk, ...) often has no favicon; the feed's
+    // declared website domain (bbc.co.uk, ...) almost always does.
+    if (!payload.siteLink) return;
+    const siteHost = parseHost(payload.siteLink);
+    if (!siteHost || siteHost === parseHost(feed.sourceUrl)) return;
+    const img = card.querySelector(".favicon-wrap img");
+    if (!img) return;
+    const next = faviconSrcForHost(siteHost);
+    if (img.src !== next) img.src = next;
+  }
+
   function renderCardContent(card, payload, feed) {
     if (!payload.success) {
       card.classList.remove("loading");
@@ -350,6 +355,7 @@
         renderFeedLists();
       }
     }
+    updateCardIcon(card, payload, feed);
     listEl.classList.remove("skeleton-list");
     listEl.innerHTML = "";
 
@@ -382,11 +388,9 @@
       }
     }
 
-    const feedRef = feed.type === "default"
-      ? { type: "default", index: feed.index }
-      : { type: "url", url: feed.sourceUrl };
-
-    const response = await apiPost("/api/v1/feeds/fetch", { feedRef });
+    const response = await apiPost("/api/v1/feeds/fetch", {
+      feedRef: { type: "default", index: feed.index },
+    });
     const payload = response.data || { success: false, error: "No response" };
     renderCardContent(card, payload, feed);
     if (payload.success) {
@@ -440,16 +444,30 @@
 
   function moveFeed(feedId, delta) {
     normalizeOrder();
-    const idx = state.prefs.order.indexOf(feedId);
-    if (idx === -1) return;
-    const target = idx + delta;
-    if (target < 0 || target >= state.prefs.order.length) return;
-    const clone = state.prefs.order.slice();
-    const [item] = clone.splice(idx, 1);
-    clone.splice(target, 0, item);
-    state.prefs.order = clone;
+    // Move relative to the visible neighbor so a hidden feed between two
+    // visible ones can't swallow the click.
+    const visible = visibleFeedsInOrder().map((feed) => feed.id);
+    const vIdx = visible.indexOf(feedId);
+    const tIdx = vIdx + delta;
+    if (vIdx === -1 || tIdx < 0 || tIdx >= visible.length) return;
+    const neighborId = visible[tIdx];
+
+    const order = state.prefs.order.filter((id) => id !== feedId);
+    const nPos = order.indexOf(neighborId);
+    if (nPos === -1) return;
+    order.splice(delta > 0 ? nPos + 1 : nPos, 0, feedId);
+    state.prefs.order = order;
     savePrefs();
-    renderGridAndFetch({ forceRefresh: false });
+
+    // Swap the DOM nodes in place — no grid rebuild, no refetch.
+    const moving = state.cards.get(feedId);
+    const neighbor = state.cards.get(neighborId);
+    if (!moving || !neighbor) return;
+    if (delta > 0) {
+      el.grid.insertBefore(neighbor.card, moving.card);
+    } else {
+      el.grid.insertBefore(moving.card, neighbor.card);
+    }
   }
 
   function toggleDefaultHidden(feedId, hidden) {
@@ -463,42 +481,8 @@
     renderGridAndFetch({ forceRefresh: false });
   }
 
-  function removeCustomFeed(feedId) {
-    state.prefs.customFeeds = state.prefs.customFeeds.filter((f) => f.id !== feedId);
-    state.prefs.order = state.prefs.order.filter((id) => id !== feedId);
-    savePrefs();
-    clearCachedPayload({ type: "custom", id: feedId });
-    pruneFeedCache();
-    normalizeOrder();
-    renderFeedLists();
-    renderGridAndFetch({ forceRefresh: false });
-  }
-
-  async function addCustomFeed(url, label) {
-    const trimmed = url.trim();
-    const test = await apiPost("/api/v1/feeds/fetch", { feedRef: { type: "url", url: trimmed } });
-    if (!test.data || !test.data.success) {
-      throw new Error(test.data?.error || "Could not validate feed");
-    }
-
-    const feedId = "custom:" + crypto.randomUUID();
-    state.prefs.customFeeds.push({
-      id: feedId,
-      url: trimmed,
-      sourceUrl: trimmed,
-      label: label.trim() || null,
-    });
-    state.prefs.order.push(feedId);
-    savePrefs();
-    pruneFeedCache();
-    normalizeOrder();
-    renderFeedLists();
-    renderGridAndFetch({ forceRefresh: false });
-  }
-
   function renderFeedLists() {
     el.defaultFeedList.innerHTML = "";
-    el.customFeedList.innerHTML = "";
 
     state.defaults.forEach((feed) => {
       const li = document.createElement("li");
@@ -516,35 +500,10 @@
       checkbox.addEventListener("change", () => toggleDefaultHidden(feed.id, !checkbox.checked));
       el.defaultFeedList.appendChild(li);
     });
-
-    if (!state.prefs.customFeeds.length) {
-      const empty = document.createElement("li");
-      empty.className = "muted";
-      empty.textContent = "No custom feeds yet.";
-      el.customFeedList.appendChild(empty);
-      return;
-    }
-
-    state.prefs.customFeeds.forEach((feed) => {
-      const li = document.createElement("li");
-      const row = document.createElement("div");
-      row.className = "custom-feed-row";
-      const text = document.createElement("span");
-      text.textContent = listLabel({ ...feed, type: "custom", sourceUrl: feed.sourceUrl || feed.url });
-      const removeBtn = document.createElement("button");
-      removeBtn.className = "btn btn-small btn-danger";
-      removeBtn.type = "button";
-      removeBtn.textContent = "Remove";
-      removeBtn.addEventListener("click", () => removeCustomFeed(feed.id));
-      row.appendChild(text);
-      row.appendChild(removeBtn);
-      li.appendChild(row);
-      el.customFeedList.appendChild(li);
-    });
   }
 
   function restoreDefaults() {
-    state.prefs = { ...EMPTY_PREFS };
+    state.prefs = emptyPrefs();
     savePrefs();
     state.feedCache = {};
     saveFeedCache();
@@ -567,19 +526,6 @@
     });
 
     el.restoreDefaults.addEventListener("click", restoreDefaults);
-
-    el.addFeedForm.addEventListener("submit", async (event) => {
-      event.preventDefault();
-      el.addFeedError.textContent = "";
-      el.addFeedError.classList.add("hidden");
-      try {
-        await addCustomFeed(el.feedUrlInput.value, el.feedLabelInput.value);
-        el.addFeedForm.reset();
-      } catch (error) {
-        el.addFeedError.textContent = error.message || "Could not add feed";
-        el.addFeedError.classList.remove("hidden");
-      }
-    });
 
     el.grid.addEventListener("click", (event) => {
       const button = event.target.closest("button[data-action]");
