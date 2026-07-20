@@ -5,17 +5,24 @@ import requests
 import html
 import random
 import os
+import json
 
 #cache = Cache(config={'DEBUG':True, 'CACHE_TYPE': 'SimpleCache')
 app = Flask(__name__)
 #cache.init_app(app)
 
-RSS_SRC=os.environ['RSS_SRC']               # eg, 'https://favorite.site/ajax.php'
-RED_API_KEY=os.environ['RED_API_KEY']       # eg, '1ec19bb7.e4f451de62439521ec19bb73046281'
+_cfg = json.loads(os.environ['REDRSS_CONFIG'])
+RSS_SRC = _cfg['rss_src']
+RED_API_KEY = _cfg['red_api_key']
+b64client = _cfg['b64client']
+refresh_token = _cfg['refresh_token']
+
+#RSS_SRC=os.environ['RSS_SRC']               # eg, 'https://favorite.site/ajax.php'
+#RED_API_KEY=os.environ['RED_API_KEY']       # eg, '1ec19bb7.e4f451de62439521ec19bb73046281'
 baseurl=os.environ['baseurl']               # eg, 'https://spam.com/'
 # these are for spotify api access. I followed this tutorial: https://www.youtube.com/watch?v=ZvGnvOShStI
-b64client=os.environ['b64client']           # eg, 'c3BhbWFmYXNmc2FnZGdsa2Rqc2xna2pkc2xna2pkc2xrZ2pzZGdzZXJnZWVlZWVlCg='
-refresh_token=os.environ['refresh_token']   # eg, 'AQABQAiHoPL-xKUX3mmM7BK6Zf5iuV3o_R4fzFSBTMl_1Bh8tmS82HDIZrzMtYscSqfObmB_NKrKJGpQbIWW7pSZb6lYo'
+#b64client=os.environ['b64client']           # eg, 'c3BhbWFmYXNmc2FnZGdsa2Rqc2xna2pkc2xna2pkc2xrZ2pzZGdzZXJnZWVlZWVlCg='
+#refresh_token=os.environ['refresh_token']   # eg, 'AQABQAiHoPL-xKUX3mmM7BK6Zf5iuV3o_R4fzFSBTMl_1Bh8tmS82HDIZrzMtYscSqfObmB_NKrKJGpQbIWW7pSZb6lYo'
 
 if not baseurl.endswith('/'):
     baseurl=baseurl+'/'
