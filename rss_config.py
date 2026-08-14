@@ -2,7 +2,7 @@ RSS_FEEDS = [
 'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
 'https://feeds.bbci.co.uk/news/world/rss.xml',
 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business',
-'http://rss.cbc.ca/lineup/canada.xml',
+'https://www.cbc.ca/webfeed/rss/rss-canada',
 'https://news.ycombinator.com/rss',
 'https://news.kagi.com/usa.xml',
 'http://feed.torrentfreak.com/Torrentfreak/',
