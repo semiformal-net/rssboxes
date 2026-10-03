@@ -522,3 +522,7 @@ tv-market-summary {
     line-height: 1.33;
   }
 }
+
+.stonks-status { font-size: 0.85rem; margin: 0 0 0.5rem; }
+.stonks-status.open { color: #15803d; }
+.stonks-status.closed { color: #b45309; }

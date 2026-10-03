@@ -27,19 +27,61 @@
         <p id="last-updated" class="last-updated" aria-live="polite">Last updated: never</p>
       </section>
 
-      <section class="stonks-widget" aria-label="Market snapshot">
-        <div class="tv-widget-wrap">
-          <script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-market-summary.js"></script>
-          <tv-market-summary
-            symbol-sectors='[{"sectionName":"Markets","symbols":["COINBASE:BTCUSD","FRED:VIXCLS","AMEX:SPY","AMEX:GLD"]}]'
-            item-size="compact"
-            mode="custom">
-          </tv-market-summary>
-          <p id="stonks-fallback" class="stonks-fallback hidden">
-            Market widget unavailable. If you use a strict content blocker, allow `widgets.tradingview-widget.com`.
-          </p>
-        </div>
-      </section>
+	<section class="stonks-widget" aria-label="Market snapshot">
+	  <p id="stonks-status" class="stonks-status"></p>
+	  <div class="tv-widget-wrap" id="stonks-wrap"></div>
+	  <p id="stonks-fallback" class="stonks-fallback hidden">
+	    Market widget unavailable. If you use a strict content blocker, allow `widgets.tradingview-widget.com`.
+	  </p>
+	</section>
+
+	<script type="module" src="https://widgets.tradingview-widget.com/w/en/tv-market-summary.js"></script>
+	<script>
+	  (function () {
+	    const OPEN_SYMBOLS   = ["AMEX:SPY", "FRED:VIXCLS", "AMEX:GLD", "COINBASE:BTCUSD"];
+	    const CLOSED_SYMBOLS = ["FOREXCOM:SPXUSD", "FRED:VIXCLS", "OANDA:XAUUSD", "COINBASE:BTCUSD"];
+	    const HOLIDAYS = ["2026-11-26", "2026-12-25", "2027-01-01"]; // NYSE full closures, YYYY-MM-DD
+	    let lastState = null;
+
+	    function marketState() {
+	      const et = new Date(new Date().toLocaleString("en-US", { timeZone: "America/New_York" }));
+	      const ymd = `${et.getFullYear()}-${String(et.getMonth() + 1).padStart(2, "0")}-${String(et.getDate()).padStart(2, "0")}`;
+	      const mins = et.getHours() * 60 + et.getMinutes();
+	      const weekday = et.getDay() > 0 && et.getDay() < 6;
+	      return weekday && !HOLIDAYS.includes(ymd) && mins >= 570 && mins < 960 ? "open" : "closed";
+	    }
+
+	    function render() {
+	      const state = marketState();
+	      if (state === lastState) return;
+	      lastState = state;
+
+	      const status = document.getElementById("stonks-status");
+	      status.className = "stonks-status " + state;
+	      status.textContent = state === "open"
+		? "● US market open"
+		: "○ US market closed: showing extended-hours prices";
+
+	      const wrap = document.getElementById("stonks-wrap");
+	      wrap.innerHTML = "";
+	      const widget = document.createElement("tv-market-summary");
+	      widget.setAttribute("symbol-sectors", JSON.stringify([
+		{ sectionName: "Markets", symbols: state === "open" ? OPEN_SYMBOLS : CLOSED_SYMBOLS }
+	      ]));
+	      widget.setAttribute("item-size", "compact");
+	      widget.setAttribute("mode", "custom");
+	      wrap.appendChild(widget);
+	    }
+
+	    const timeout = new Promise(r => setTimeout(() => r(false), 6000));
+	    Promise.race([customElements.whenDefined("tv-market-summary").then(() => true), timeout])
+	      .then(ok => { if (!ok) document.getElementById("stonks-fallback").classList.remove("hidden"); });
+
+	    render();
+	    setInterval(render, 60 * 1000);
+	  })();
+	</script>
+
 
       <section id="customize-panel" class="customize-panel hidden" aria-label="Customize feed dashboard">
         <h2>Customize Dashboard</h2>
