@@ -1,5 +1,4 @@
 from flask import Flask, redirect, url_for, render_template # requires flask>=2.1
-from flask_caching import Cache
 import functions_framework
 import requests
 import html

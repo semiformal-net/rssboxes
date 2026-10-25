@@ -1,4 +1,4 @@
-runtime: python310
+runtime: python314
 instance_class: F1
 # Threaded gunicorn: the workload is I/O-bound (waiting on upstream feeds) and
 # the frontend fires ~20 parallel fetches per page load. Requires gunicorn in

@@ -7,7 +7,7 @@ from html.parser import HTMLParser
 from flask import Flask, render_template, jsonify, send_from_directory, request
 import feedparser
 import requests
-from blingfire import text_to_sentences
+from sentencex import segment
 
 # service-to-service auth
 import google.auth.transport.requests
@@ -57,15 +57,12 @@ def first_sentence(text: str) -> str:
         return ""
 
     try:
-        # blingfire returns newline-separated sentences
-        sentences = text_to_sentences(text).split("\n")
-
-        for s in sentences:
+        for s in segment("en", text):
             s = s.strip()
             if s:
                 return s
 
-        # if blingfire returns only empty lines, fall back
+        # if the segmenter yields only empty strings, fall back
         return text
 
     except Exception:
