@@ -16,6 +16,16 @@ run `gcloud app deploy`
 
 This can be made to proxy behind cloudflare, or just as a simple CNAME pointer from a domain. See [here](https://gist.github.com/patmigliaccio/d559035e1aa7808705f689b20d7b3fd3)
 
+## Dependencies
+
+Direct dependencies are listed in `requirements.in`. `requirements.txt` is generated from it and pins every package, including indirect ones. To add or upgrade a package, edit `requirements.in`, then regenerate the lock file with [uv](https://docs.astral.sh/uv/):
+
+```
+uv pip compile requirements.in --python-version 3.14 -o requirements.txt
+```
+
+Don't edit `requirements.txt` by hand. To bump indirect packages without changing `requirements.in`, add `--upgrade` to the command. Deploys install from `requirements.txt` only.
+
 ## Docker
 
 You can run this as a docker container if you'd like. Using the included `Dockerfile`,

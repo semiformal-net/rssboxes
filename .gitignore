@@ -144,3 +144,4 @@ __pycache__/
 # local design artifacts
 *.png
 PLAN.md
+PLAN_env.md
