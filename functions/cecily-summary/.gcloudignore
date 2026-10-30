@@ -1,0 +1,4 @@
+node_modules/
+.gcloudignore
+README.md
+lifecycle.json

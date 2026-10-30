@@ -37,9 +37,24 @@ TRACKING_PARAM_KEYS = {
 TRACKING_PARAM_PREFIXES = ("utm_", "at_", "vero_", "mkt_", "ga_", "pk_")
 
 class StrippingParser(HTMLParser):
+    # Tags that start a new line of text. A space is added at each one so
+    # neighbouring paragraphs don't run together ("end.Start").
+    BLOCK_TAGS = {
+        "p", "div", "br", "li", "ul", "ol", "h1", "h2", "h3", "h4", "h5", "h6",
+        "figure", "figcaption", "blockquote", "tr", "td", "th", "section", "article",
+    }
+
     def __init__(self):
         super().__init__()
         self.parts = []
+
+    def handle_starttag(self, tag, attrs):
+        if tag in self.BLOCK_TAGS:
+            self.parts.append(" ")
+
+    def handle_endtag(self, tag):
+        if tag in self.BLOCK_TAGS:
+            self.parts.append(" ")
 
     def handle_data(self, data):
         self.parts.append(data)
@@ -50,7 +65,7 @@ class StrippingParser(HTMLParser):
 def html_to_text(s: str) -> str:
     parser = StrippingParser()
     parser.feed(s)
-    return html.unescape(parser.get_text()).strip()
+    return " ".join(html.unescape(parser.get_text()).split())
 
 def first_sentence(text: str) -> str:
     if not text:
