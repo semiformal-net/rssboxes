@@ -1,5 +1,5 @@
 RSS_FEEDS = [
-'https://feeds.content.dowjones.io/public/rss/RSSWorldNews',
+'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/cbc-filter',
 'https://feeds.bbci.co.uk/news/world/rss.xml',
 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business',
 'https://www.cbc.ca/webfeed/rss/rss-canada',
@@ -17,7 +17,7 @@ RSS_FEEDS = [
 'http://feed.torrentfreak.com/Torrentfreak/',
 'https://variety.com/v/tv/reviews/feed/',
 'https://daily.jstor.org/feed',
-'https://cecily-feed.nfshost.com/cecily.xml',
+'https://northamerica-northeast1-rssboxes-382506.cloudfunctions.net/cecily-summary',
 'https://www.science.org/blogs/pipeline/feed',
 'https://newsletter.rodeo/feeds/polymarketoracle.atom'
 ]

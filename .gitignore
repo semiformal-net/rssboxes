@@ -145,3 +145,6 @@ __pycache__/
 *.png
 PLAN.md
 PLAN_env.md
+
+# Cloudflare wrangler local state
+.wrangler/

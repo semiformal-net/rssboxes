@@ -1,0 +1,3 @@
+name = "cbc-filter"
+main = "cbc-worldnews-filter.js"
+compatibility_date = "2026-09-01"
