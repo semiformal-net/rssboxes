@@ -3,7 +3,7 @@ RSS_FEEDS = [
 'https://feeds.bbci.co.uk/news/world/rss.xml',
 'https://www.theglobeandmail.com/arc/outboundfeeds/rss/category/business',
 'https://www.cbc.ca/webfeed/rss/rss-canada',
-'https://hnrss.org/frontpage?description=0',
+'https://hackernews.betacat.io/feed.xml',
 'https://news.kagi.com/usa.xml',
 'https://forums.redflagdeals.com/feed/forum/9',
 'http://feeds.feedburner.com/Mobilesyrup',

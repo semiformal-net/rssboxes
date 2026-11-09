@@ -8,6 +8,23 @@ Demo site: [rssboxes.semiformal.net](https://rssboxes.semiformal.net/)
 
 Edit the feeds in `rss_config.py`. It is just a python file.
 
+## Hacker News feeds
+
+Most Hacker News feeds aren't the front page, even when they say so:
+
+- **Front page vs best.** The front page (https://news.ycombinator.com/) ranks stories by points and age, so new stories rise fast. "Best" is the top-voted stories of the past few days, which lags well behind the front page. When I checked, feeds built on "best" covered only 6 to 8 of the 30 front-page stories.
+- **The official feed** (https://news.ycombinator.com/rss) is blocked for rssboxes.
+- **hnrss.org** is unmaintained (last commit Oct 2023) and often returns 502s. Its `/frontpage` feed is newest first rather than in rank order, and has only 20 stories by default. None of its forks fix this.
+- **Algolia's `front_page` tag** gets the right stories, but sorted by points or by date, never by HN rank. The HN API's `topstories.json` is the only source of the order.
+
+For now rssboxes uses https://hackernews.betacat.io/feed.xml ([code](https://github.com/polyrabbit/hacker-news-digest)). It scrapes the front page in rank order and adds an AI summary of each article. It rebuilds every 20 minutes. Caveats:
+
+- New stories can take up to about 20 minutes to appear.
+- Text posts (Ask HN and similar) get a useless summary, often just "Sorry".
+- It's one person's project.
+
+If it goes away, [functions/hn-frontpage](functions/hn-frontpage/) serves the front page in rank order, without summaries.
+
 ## hosting
 
 This is set up to run on GCP per [these instructions](https://cloud.google.com/appengine/docs/standard/python3/runtime).

@@ -6,6 +6,7 @@ These functions serve rss to the rssboxes site, for feeds that need some process
 |---|---|---|---|
 | [redrss](redrss/) | GCP Cloud Functions | private | Top music from a private source, with spotify links |
 | [cbc-filter](cbc-filter/) | GCP Cloud Functions or Cloudflare Workers | private on GCP, public on Cloudflare | CBC world news, filtered to wire stories |
+| [hn-frontpage](hn-frontpage/) | GCP Cloud Functions or Cloudflare Workers | private on GCP, public on Cloudflare | Hacker News front page in ranked order, from the HN API and Algolia, cached 30 minutes |
 | [cecily-summary](cecily-summary/) | GCP Cloud Functions | private | Cecily longreads, with a one-sentence summary per item (Gemini or Claude on Vertex AI) |
 
 Each function has a readme with deployment details.
