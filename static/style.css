@@ -107,28 +107,145 @@ body {
   margin-bottom: 1rem;
 }
 
-.tv-widget-wrap {
-  border: 1px solid #d3deea;
-  border-radius: 10px;
-  overflow: hidden;
-  background: #ffffff;
-  padding: 0;
+.ticker-rail {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.5rem;
 }
 
-tv-market-summary {
+.ticker-card {
+  --card-accent: var(--accent);
+  --card-accent-2: var(--accent-3);
+  --card-accent-soft: #cfeefa;
+  position: relative;
+  display: grid;
+  grid-template-rows: auto auto auto 1fr;
+  min-height: 7.5rem;
+  padding: 0.7rem 0.7rem 0;
+  border: 1px solid var(--line);
+  border-top: 0;
+  border-radius: 10px;
+  background: var(--card);
+  box-shadow: 0 3px 10px rgba(15, 23, 32, 0.06);
+  color: var(--ink-0);
+  text-decoration: none;
+  overflow: hidden;
+  transition: transform 140ms ease, box-shadow 160ms ease;
+}
+
+.ticker-card::before {
+  content: "";
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--card-accent), var(--card-accent-2));
+}
+
+.ticker-card:hover,
+.ticker-card:focus-visible {
+  transform: translateY(-2px);
+  box-shadow: 0 12px 24px rgba(15, 23, 32, 0.13);
+  outline: none;
+}
+
+.ticker-card:focus-visible {
+  border-color: var(--card-accent);
+  background: var(--card-accent-soft);
+}
+
+.ticker-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+  min-width: 0;
+}
+
+.ticker-name {
+  font-family: "DM Serif Display", serif;
+  font-size: 1.2rem;
+  font-weight: 400;
+  line-height: 1.1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.ticker-symbol {
+  flex: none;
+  font-size: 0.68rem;
+  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--card-accent);
+}
+
+.ticker-price {
+  margin-top: 0.2rem;
+  font-size: 0.78rem;
+  color: var(--ink-1);
+  font-variant-numeric: tabular-nums;
+}
+
+.ticker-perf {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.3rem;
+  margin-top: 0.3rem;
+  font-size: 0.95rem;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  color: var(--ink-1);
+}
+
+.ticker-arrow {
+  display: grid;
+  place-items: center;
+  width: 1.05rem;
+  height: 1.05rem;
+  border-radius: 50%;
+  background: var(--ink-1);
+  color: #ffffff;
+  font-size: 0.7rem;
+}
+
+/* Same green/red ticker-line uses inside the sparkline SVG. */
+.ticker-perf[data-direction="up"] { color: #17854b; }
+.ticker-perf[data-direction="up"] .ticker-arrow { background: #17854b; }
+.ticker-perf[data-direction="down"] { color: #d13c43; }
+.ticker-perf[data-direction="down"] .ticker-arrow { background: #d13c43; }
+
+.ticker-chart {
+  align-self: end;
+  display: block;
+  height: 48px;
+  margin: 0.3rem -0.65rem 0;
+}
+
+.ticker-chart img {
   display: block;
   width: 100%;
-  line-height: 0;
+  height: 48px;
+  max-width: none;
 }
 
-.stonks-fallback {
-  margin: 0;
-  padding: 0.55rem 0.65rem;
-  border-top: 1px solid #d3deea;
-  background: #f7fbff;
-  color: #375168;
-  font-size: 0.82rem;
-  font-weight: 700;
+.ticker-card[data-state="loading"] {
+  opacity: 0.74;
+}
+
+.ticker-card[data-state="loading"] .ticker-chart {
+  background: linear-gradient(90deg, #eef4fb, #f7fbff, #eef4fb);
+}
+
+.ticker-card[data-state="error"] .ticker-price::after {
+  content: " unavailable";
+}
+
+@media (max-width: 780px) {
+  .ticker-rail {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
 }
 
 .btn {
@@ -261,7 +378,8 @@ tv-market-summary {
   box-shadow: 0 12px 24px rgba(15, 23, 32, 0.13);
 }
 
-.feed-card.accent-a {
+.feed-card.accent-a,
+.ticker-card.accent-a {
   --card-accent: #0891b2;
   --card-accent-2: #2a9d8f;
   --card-accent-soft: #d9f2f9;
@@ -269,7 +387,8 @@ tv-market-summary {
   --card-actions-bg: rgba(8, 145, 178, 0.08);
 }
 
-.feed-card.accent-b {
+.feed-card.accent-b,
+.ticker-card.accent-b {
   --card-accent: #2a9d8f;
   --card-accent-2: #0891b2;
   --card-accent-soft: #d9f7f2;
@@ -277,7 +396,8 @@ tv-market-summary {
   --card-actions-bg: rgba(42, 157, 143, 0.1);
 }
 
-.feed-card.accent-c {
+.feed-card.accent-c,
+.ticker-card.accent-c {
   --card-accent: #e76f51;
   --card-accent-2: #f4a261;
   --card-accent-soft: #fee9df;
@@ -285,7 +405,8 @@ tv-market-summary {
   --card-actions-bg: rgba(231, 111, 81, 0.1);
 }
 
-.feed-card.accent-d {
+.feed-card.accent-d,
+.ticker-card.accent-d {
   --card-accent: #6b7bbf;
   --card-accent-2: #0891b2;
   --card-accent-soft: #e4e9ff;
