@@ -1,0 +1,18 @@
+# Upload only what App Engine needs to run rssboxes; everything else is
+# excluded by default so stray local files (venvs, .env, notes) never ship.
+# Add new top-level modules here or the deploy will fail with ImportError.
+# Check with: gcloud meta list-files-for-upload
+
+/*
+!/app.yaml
+!/main.py
+!/rss_config.py
+!/requirements.txt
+!/templates/
+!/static/
+
+# Junk that can appear inside the allowed directories
+__pycache__/
+*.py[co]
+.DS_Store
+*.log
